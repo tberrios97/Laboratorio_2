@@ -1,0 +1,14 @@
+syntax = "proto3";
+package comm;
+
+message requestTest {
+  string body = 1;
+}
+
+message responseTest {
+  string body = 1;
+}
+
+service Comm {
+  rpc funTest(requestTest) returns (responseTest) {}
+}
