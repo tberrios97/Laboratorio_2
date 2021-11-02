@@ -1,4 +1,4 @@
-package chat
+package comm
 
 import (
 	"golang.org/x/net/context"
