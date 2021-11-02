@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"message"
-	"google.golang.org/grpc"
+	"github.com/tberrios97/Laboratorio_2/comm"
 )
 
 func main() {
@@ -17,11 +16,11 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := chat.Server{}
+	s := Server{}
 
 	grpcServer := grpc.NewServer()
 
-	chat.RegisterChatServiceServer(grpcServer, &s)
+	comm.RegisterCommServer(grpcServer, &s)
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %s", err)

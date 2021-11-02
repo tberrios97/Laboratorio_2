@@ -2,11 +2,9 @@ package main
 
 import (
 	"log"
-
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-
-	"github.com/tutorialedge/go-grpc-beginners-tutorial/chat"
+	"github.com/tberrios97/Laboratorio_2/comm"
 )
 
 func main() {
@@ -18,9 +16,9 @@ func main() {
 	}
 	defer conn.Close()
 
-	c := chat.NewChatServiceClient(conn)
+	c := comm.NewCommClient(conn)
 
-	response, err := c.SayHello(context.Background(), &chat.Message{Body: "Hello From Client!"})
+	response, err := c.funTest(context.Background(), &comm.requestTest{Body: "Hello From Client!"})
 	if err != nil {
 		log.Fatalf("Error when calling SayHello: %s", err)
 	}
