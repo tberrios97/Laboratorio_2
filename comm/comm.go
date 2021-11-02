@@ -7,6 +7,6 @@ import (
 type Server struct{
 }
 
-func (s *Server) funTest(ctx context.Context, in *requestTest) (*responseTest, error) {
-	return &responseTest{Body: "Hello From the Server!"}, nil
+func (s *Server) FunTest(ctx context.Context, in *RequestTest) (*ResponseTest, error) {
+	return &ResponseTest{Body: "Hello From the Server!"}, nil
 }

@@ -4,14 +4,14 @@ option go_package = "github.com/tberrios97/Laboratorio_2/comm";
 package comm;
 
 
-message requestTest {
+message RequestTest {
   string body = 1;
 }
 
-message responseTest {
+message ResponseTest {
   string body = 1;
 }
 
 service Comm {
-  rpc funTest(requestTest) returns (responseTest) {}
+  rpc FunTest(RequestTest) returns (ResponseTest) {}
 }
