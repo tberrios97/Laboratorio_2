@@ -31,7 +31,7 @@ func NewCommClient(cc grpc.ClientConnInterface) CommClient {
 
 func (c *commClient) FunTest(ctx context.Context, in *RequestTest, opts ...grpc.CallOption) (*ResponseTest, error) {
 	out := new(ResponseTest)
-	err := c.cc.Invoke(ctx, "/comm.Comm/funTest", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/comm.Comm/FunTest", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +76,7 @@ func _Comm_FunTest_Handler(srv interface{}, ctx context.Context, dec func(interf
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/comm.Comm/funTest",
+		FullMethod: "/comm.Comm/FunTest",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CommServer).FunTest(ctx, req.(*RequestTest))
@@ -92,7 +92,7 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*CommServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "funTest",
+			MethodName: "FunTest",
 			Handler:    _Comm_FunTest_Handler,
 		},
 	},
