@@ -1,11 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"net"
 	"context"
-	pb "github.com/tberrios97/Laboratorio_2/comm"
+	"time"
+	pb "example.com/go-comm-grpc/comm"
 	"google.golang.org/grpc"
 )
 
@@ -26,7 +25,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	response, err := c.FunTest(ctx, &pb.requestTest{Body: "Hello From Client!"})
+	response, err := c.FunTest(ctx, &pb.RequestTest{Body: "Hello From Client!"})
 	if err != nil {
 		log.Fatalf("Error when calling SayHello: %v", err)
 	}

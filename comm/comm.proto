@@ -1,8 +1,12 @@
 syntax = "proto3";
 
-option go_package = "github.com/tberrios97/Laboratorio_2/comm";
 package comm;
 
+option go_package = "example.com/go-comm-grpc;go_comm_grpc";
+
+service Comm {
+  rpc FunTest(RequestTest) returns (ResponseTest) {}
+}
 
 message RequestTest {
   string body = 1;
@@ -12,6 +16,3 @@ message ResponseTest {
   string body = 1;
 }
 
-service Comm {
-  rpc FunTest(RequestTest) returns (ResponseTest) {}
-}
