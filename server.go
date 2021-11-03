@@ -4,25 +4,39 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"github.com/tberrios97/Laboratorio_2/comm"
+	"context"
+	pb "github.com/tberrios97/Laboratorio_2/comm"
+	"google.golang.org/grpc"
 )
+
+const (
+	port = ":9000"
+)
+
+type CommServer struct {
+	pb.UnimplementedCommServer
+}
+
+fun (s *CommServer) FunTest(ctx context.Context, in *pb.RequestTest) (*pb.ResponseTest, error){
+	log.Printf("Request from client: %v", in.GetBody())
+	return &pb.RequestTest{body: "Hello From Server!"}, nil
+}
 
 func main() {
 
-	fmt.Println("Go gRPC Beginners Tutorial!")
-
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", 9000))
+	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	s := Server{}
+	s := grpc.NewServer()
 
-	grpcServer := grpc.NewServer()
+	pb.RegisterCommServer(s, &CommServer{})
 
-	comm.RegisterCommServer(grpcServer, &s)
+	log.Printf("server listening at %v", lis.Addr())
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %s", err)
 	}
+
 }

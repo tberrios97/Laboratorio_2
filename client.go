@@ -1,27 +1,35 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"golang.org/x/net/context"
+	"net"
+	"context"
+	pb "github.com/tberrios97/Laboratorio_2/comm"
 	"google.golang.org/grpc"
-	"github.com/tberrios97/Laboratorio_2/comm"
+)
+
+const (
+	address = "localhost:9000"
 )
 
 func main() {
-
-	var conn *grpc.ClientConn
-	conn, err := grpc.Dial(":9000", grpc.WithInsecure())
+ 
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
-		log.Fatalf("did not connect: %s", err)
+		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
 
-	c := comm.NewCommClient(conn)
+	c := pb.NewCommClient(conn)
 
-	response, err := c.funTest(context.Background(), &comm.requestTest{Body: "Hello From Client!"})
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	response, err := c.FunTest(ctx, &pb.requestTest{Body: "Hello From Client!"})
 	if err != nil {
-		log.Fatalf("Error when calling SayHello: %s", err)
+		log.Fatalf("Error when calling SayHello: %v", err)
 	}
-	log.Printf("Response from server: %s", response.Body)
+	log.Printf("Response from server: %v", response.Body)
 
 }
