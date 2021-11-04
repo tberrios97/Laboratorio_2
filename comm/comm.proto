@@ -6,6 +6,28 @@ option go_package = "example.com/go-comm-grpc;go_comm_grpc";
 
 service Comm {
   rpc FunTest(RequestTest) returns (ResponseTest) {}
+  rpc RegistrarJugadaJugador(RequestRJJ) returns (ResponseRJJ) {}
+  rpc RegistrarJugadaDN(RequestRJDN) returns (ResponseRJDN) {}
+}
+
+message RequestRJDN {
+  int32 n_jugador = 1;
+  int32 n_ronda = 2;
+  int31 jugada = 3;
+}
+
+message ResponseRJDN {
+  string body = 1;
+}
+
+message RequestRJJ {
+  int32 n_jugador = 1;
+  int32 n_ronda = 2;
+  int31 jugada = 3;
+}
+
+message ResponseRJJ {
+  string body = 1;
 }
 
 message RequestTest {
@@ -15,4 +37,3 @@ message RequestTest {
 message ResponseTest {
   string body = 1;
 }
-
