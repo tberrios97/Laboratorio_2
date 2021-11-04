@@ -6,6 +6,52 @@ option go_package = "example.com/go-comm-grpc;go_comm_grpc";
 
 service Comm {
   rpc FunTest(RequestTest) returns (ResponseTest) {}
+  rpc UnirseJuegoCalamar(RequestUnirse) returns (ResponseUnirse) {}
+  rpc InicioEtapa(RequestInicio) returns (ResponseInicio) {}
+  rpc JugadaPrimeraEtapa(RequestPrimeraEtapa) returns (ResponsePrimeraEtapa) {}
+  rpc JugadaSegundaEtapa(RequestSegundaEtapa) returns (ResponseSegundaEtapa) {}
+  rpc JugadaTerceraEtapa(RequestTerceraEtapa) returns (ResponseTerceraEtapa) {}
+}
+
+message RequestUnirse {
+  int32 body = 1;
+}
+
+message ResponseUnirse {
+  int32 numeroJugador = 1;
+}
+
+message RequestInicio {
+  int32 body = 1;
+}
+
+message ResponseInicio {
+  int32 body = 1;
+}
+
+message RequestPrimeraEtapa {
+  int32 jugada = 1;
+  int32 ronda = 2;
+}
+
+message RequestSegundaEtapa {
+  int32 jugada = 1;
+}
+
+message RequestTerceraEtapa {
+  int32 jugada = 1;
+}
+
+message ResponsePrimeraEtapa {
+  int32 estado = 1;
+}
+
+message ResponseSegundaEtapa {
+  int32 estado = 1;
+}
+
+message ResponseTerceraEtapa {
+  int32 estado = 1;
 }
 
 message RequestTest {
