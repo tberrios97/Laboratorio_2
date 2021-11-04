@@ -20,11 +20,12 @@ const _ = grpc.SupportPackageIsVersion7
 type CommClient interface {
 	FunTest(ctx context.Context, in *RequestTest, opts ...grpc.CallOption) (*ResponseTest, error)
 	UnirseJuegoCalamar(ctx context.Context, in *RequestUnirse, opts ...grpc.CallOption) (*ResponseUnirse, error)
-	InicioEtapa(ctx context.Context, in *RequestInicio, opts ...grpc.CallOption) (*ResponseInicio, error)
+	InicioEtapa(ctx context.Context, in *RequestEtapa, opts ...grpc.CallOption) (*ResponseEtapa, error)
+	InicioRonda(ctx context.Context, in *RequestRonda, opts ...grpc.CallOption) (*ReponseRonda, error)
 	JugadaPrimeraEtapa(ctx context.Context, in *RequestPrimeraEtapa, opts ...grpc.CallOption) (*ResponsePrimeraEtapa, error)
 	JugadaSegundaEtapa(ctx context.Context, in *RequestSegundaEtapa, opts ...grpc.CallOption) (*ResponseSegundaEtapa, error)
 	JugadaTerceraEtapa(ctx context.Context, in *RequestTerceraEtapa, opts ...grpc.CallOption) (*ResponseTerceraEtapa, error)
-	RegistrarJugadaJugador(ctx context.Context, in *RequestRJJ, opts ...grpc.CallOption) (*ResponseRJJ, error)
+	RegistrarJugadaJugador(ctx context.Context, opts ...grpc.CallOption) (Comm_RegistrarJugadaJugadorClient, error)
 	RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opts ...grpc.CallOption) (*ResponseRJDN, error)
 }
 
@@ -54,9 +55,18 @@ func (c *commClient) UnirseJuegoCalamar(ctx context.Context, in *RequestUnirse, 
 	return out, nil
 }
 
-func (c *commClient) InicioEtapa(ctx context.Context, in *RequestInicio, opts ...grpc.CallOption) (*ResponseInicio, error) {
-	out := new(ResponseInicio)
+func (c *commClient) InicioEtapa(ctx context.Context, in *RequestEtapa, opts ...grpc.CallOption) (*ResponseEtapa, error) {
+	out := new(ResponseEtapa)
 	err := c.cc.Invoke(ctx, "/comm.Comm/InicioEtapa", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *commClient) InicioRonda(ctx context.Context, in *RequestRonda, opts ...grpc.CallOption) (*ReponseRonda, error) {
+	out := new(ReponseRonda)
+	err := c.cc.Invoke(ctx, "/comm.Comm/InicioRonda", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -90,13 +100,38 @@ func (c *commClient) JugadaTerceraEtapa(ctx context.Context, in *RequestTerceraE
 	return out, nil
 }
 
-func (c *commClient) RegistrarJugadaJugador(ctx context.Context, in *RequestRJJ, opts ...grpc.CallOption) (*ResponseRJJ, error) {
-	out := new(ResponseRJJ)
-	err := c.cc.Invoke(ctx, "/comm.Comm/RegistrarJugadaJugador", in, out, opts...)
+func (c *commClient) RegistrarJugadaJugador(ctx context.Context, opts ...grpc.CallOption) (Comm_RegistrarJugadaJugadorClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Comm_ServiceDesc.Streams[0], "/comm.Comm/RegistrarJugadaJugador", opts...)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	x := &commRegistrarJugadaJugadorClient{stream}
+	return x, nil
+}
+
+type Comm_RegistrarJugadaJugadorClient interface {
+	Send(*RequestRJJ) error
+	CloseAndRecv() (*ResponseRJJ, error)
+	grpc.ClientStream
+}
+
+type commRegistrarJugadaJugadorClient struct {
+	grpc.ClientStream
+}
+
+func (x *commRegistrarJugadaJugadorClient) Send(m *RequestRJJ) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *commRegistrarJugadaJugadorClient) CloseAndRecv() (*ResponseRJJ, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(ResponseRJJ)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
 
 func (c *commClient) RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opts ...grpc.CallOption) (*ResponseRJDN, error) {
@@ -114,11 +149,12 @@ func (c *commClient) RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opt
 type CommServer interface {
 	FunTest(context.Context, *RequestTest) (*ResponseTest, error)
 	UnirseJuegoCalamar(context.Context, *RequestUnirse) (*ResponseUnirse, error)
-	InicioEtapa(context.Context, *RequestInicio) (*ResponseInicio, error)
+	InicioEtapa(context.Context, *RequestEtapa) (*ResponseEtapa, error)
+	InicioRonda(context.Context, *RequestRonda) (*ReponseRonda, error)
 	JugadaPrimeraEtapa(context.Context, *RequestPrimeraEtapa) (*ResponsePrimeraEtapa, error)
 	JugadaSegundaEtapa(context.Context, *RequestSegundaEtapa) (*ResponseSegundaEtapa, error)
 	JugadaTerceraEtapa(context.Context, *RequestTerceraEtapa) (*ResponseTerceraEtapa, error)
-	RegistrarJugadaJugador(context.Context, *RequestRJJ) (*ResponseRJJ, error)
+	RegistrarJugadaJugador(Comm_RegistrarJugadaJugadorServer) error
 	RegistrarJugadaDN(context.Context, *RequestRJDN) (*ResponseRJDN, error)
 	mustEmbedUnimplementedCommServer()
 }
@@ -133,8 +169,11 @@ func (UnimplementedCommServer) FunTest(context.Context, *RequestTest) (*Response
 func (UnimplementedCommServer) UnirseJuegoCalamar(context.Context, *RequestUnirse) (*ResponseUnirse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UnirseJuegoCalamar not implemented")
 }
-func (UnimplementedCommServer) InicioEtapa(context.Context, *RequestInicio) (*ResponseInicio, error) {
+func (UnimplementedCommServer) InicioEtapa(context.Context, *RequestEtapa) (*ResponseEtapa, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InicioEtapa not implemented")
+}
+func (UnimplementedCommServer) InicioRonda(context.Context, *RequestRonda) (*ReponseRonda, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InicioRonda not implemented")
 }
 func (UnimplementedCommServer) JugadaPrimeraEtapa(context.Context, *RequestPrimeraEtapa) (*ResponsePrimeraEtapa, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JugadaPrimeraEtapa not implemented")
@@ -145,8 +184,8 @@ func (UnimplementedCommServer) JugadaSegundaEtapa(context.Context, *RequestSegun
 func (UnimplementedCommServer) JugadaTerceraEtapa(context.Context, *RequestTerceraEtapa) (*ResponseTerceraEtapa, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JugadaTerceraEtapa not implemented")
 }
-func (UnimplementedCommServer) RegistrarJugadaJugador(context.Context, *RequestRJJ) (*ResponseRJJ, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RegistrarJugadaJugador not implemented")
+func (UnimplementedCommServer) RegistrarJugadaJugador(Comm_RegistrarJugadaJugadorServer) error {
+	return status.Errorf(codes.Unimplemented, "method RegistrarJugadaJugador not implemented")
 }
 func (UnimplementedCommServer) RegistrarJugadaDN(context.Context, *RequestRJDN) (*ResponseRJDN, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegistrarJugadaDN not implemented")
@@ -201,7 +240,7 @@ func _Comm_UnirseJuegoCalamar_Handler(srv interface{}, ctx context.Context, dec 
 }
 
 func _Comm_InicioEtapa_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RequestInicio)
+	in := new(RequestEtapa)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -213,7 +252,25 @@ func _Comm_InicioEtapa_Handler(srv interface{}, ctx context.Context, dec func(in
 		FullMethod: "/comm.Comm/InicioEtapa",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommServer).InicioEtapa(ctx, req.(*RequestInicio))
+		return srv.(CommServer).InicioEtapa(ctx, req.(*RequestEtapa))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Comm_InicioRonda_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestRonda)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommServer).InicioRonda(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/comm.Comm/InicioRonda",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommServer).InicioRonda(ctx, req.(*RequestRonda))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -272,22 +329,30 @@ func _Comm_JugadaTerceraEtapa_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Comm_RegistrarJugadaJugador_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RequestRJJ)
-	if err := dec(in); err != nil {
+func _Comm_RegistrarJugadaJugador_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(CommServer).RegistrarJugadaJugador(&commRegistrarJugadaJugadorServer{stream})
+}
+
+type Comm_RegistrarJugadaJugadorServer interface {
+	SendAndClose(*ResponseRJJ) error
+	Recv() (*RequestRJJ, error)
+	grpc.ServerStream
+}
+
+type commRegistrarJugadaJugadorServer struct {
+	grpc.ServerStream
+}
+
+func (x *commRegistrarJugadaJugadorServer) SendAndClose(m *ResponseRJJ) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *commRegistrarJugadaJugadorServer) Recv() (*RequestRJJ, error) {
+	m := new(RequestRJJ)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(CommServer).RegistrarJugadaJugador(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/comm.Comm/RegistrarJugadaJugador",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommServer).RegistrarJugadaJugador(ctx, req.(*RequestRJJ))
-	}
-	return interceptor(ctx, in, info, handler)
+	return m, nil
 }
 
 func _Comm_RegistrarJugadaDN_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -328,6 +393,10 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Comm_InicioEtapa_Handler,
 		},
 		{
+			MethodName: "InicioRonda",
+			Handler:    _Comm_InicioRonda_Handler,
+		},
+		{
 			MethodName: "JugadaPrimeraEtapa",
 			Handler:    _Comm_JugadaPrimeraEtapa_Handler,
 		},
@@ -340,14 +409,16 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Comm_JugadaTerceraEtapa_Handler,
 		},
 		{
-			MethodName: "RegistrarJugadaJugador",
-			Handler:    _Comm_RegistrarJugadaJugador_Handler,
-		},
-		{
 			MethodName: "RegistrarJugadaDN",
 			Handler:    _Comm_RegistrarJugadaDN_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "RegistrarJugadaJugador",
+			Handler:       _Comm_RegistrarJugadaJugador_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "comm/comm.proto",
 }

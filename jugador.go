@@ -2,9 +2,17 @@ package main
 
 import (
   "fmt"
+  "log"
   "time"
+  "context"
   //"strings"
   "math/rand"
+  "google.golang.org/grpc"
+  pb "example.com/go-comm-grpc/comm"
+)
+
+const (
+  address = "localhost:9000"
 )
 
 func random(min, max int) int {
@@ -30,10 +38,10 @@ func intermedio(etapa string){
   }
 }
 
-func juego_etapa_1() bool{
-  var jugada int
-  ronda := 1
-  jugando := true
+func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32) bool{
+  var jugada int32
+  var estado bool
+  var ronda int32 = 1
   fmt.Println("[*] Comenzando primera etapa.")
   fmt.Println("[*] Juego Luz Roja, Luz Verde.")
   for ronda <= 4{
@@ -43,11 +51,15 @@ func juego_etapa_1() bool{
     fmt.Println("[*] Jugada:", jugada)
     
     //Enviar al Líder la jugada y recibir respuesta
+    respuesta, err := cliente.JugadaPrimeraEtapa(ctx, &pb.RequestPrimeraEtapa{Jugada: jugada, Ronda:ronda, Jugador:numeroJugador})
+    if err != nil {
+      log.Fatalf("Error: %v", err)
+    }
+    log.Printf("Número de jugar: %v", respuesta.GetEstado())
 
-    respuesta := true
+    estado = true
 
-    if(!respuesta){
-      jugando = false
+    if(!estado){
       fmt.Println("[*] Has sido eliminado.\n[*] Gracias por jugar.")
       break
     }
@@ -56,7 +68,7 @@ func juego_etapa_1() bool{
     fmt.Println("[*]\n[*]\n[*]")
   }
   
-  return jugando
+  return estado
 }
 
 func juego_etapa_2() bool{
@@ -126,11 +138,23 @@ func juego_etapa_3() bool{
 }
 
 func main(){
-  var input int
   var pozo int
+  var input int
   var jugando bool
-  rand.Seed(time.Now().UnixNano())
+  var numeroJugador int32
   
+  //Definicion de la conexión con el servidor
+  conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+  if err != nil {
+    log.Fatalf("did not connect: %v", err)
+  }
+  defer conn.Close()
+  cliente := pb.NewCommClient(conn)
+  ctx, cancel := context.WithTimeout(context.Background(), 600 * time.Second)
+  defer cancel()
+
+  rand.Seed(time.Now().UnixNano())
+
   fmt.Println("[*] Bienvenido a SquidGame.\n[*] ¿Deseas unirte?.\n[*] (1) Si.\t(2) No.")
   fmt.Scan(&input)
 
@@ -138,12 +162,28 @@ func main(){
   if input == 1 {
     //Enviar petición
     fmt.Println("[*] Iniciando contacto con el Líder.")
-    //Establecer conexión al juego y recibir cuando este listo para jugar
+    respuesta, err := cliente.UnirseJuegoCalamar(ctx, &pb.RequestUnirse{Body: 1})
+    if err != nil {
+      log.Fatalf("Error when calling SayHello: %v", err)
+    }
+    log.Printf("Número de jugar: %v", respuesta.NumeroJugador)
 
-    //...
+    numeroJugador = respuesta.GetNumeroJugador()
+
+    if numeroJugador == 0{
+      fmt.Println("[*] Finalizando programa de SquidGame.")
+      return
+    }
+
+    //Esperar a la respuesta del servidor para iniciar la etapa
+    fmt.Println("[*] Esperando a los demás jugadores...")
+    _, err = cliente.InicioEtapa(ctx, &pb.RequestEtapa{Body: 1})
+    if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
 
     //Comenzar primera etapa
-    jugando = juego_etapa_1()
+    jugando = juegoEtapa1(cliente, ctx, numeroJugador)
 
     if !jugando{
       fmt.Println("[*] Finalizando programa de SquidGame.")
