@@ -115,6 +115,16 @@ func fin_ronda(jugadores [16]int,ronda int){
     }
 }
 func main(){
+  //Hay que decidir como los tendremos, pensaba un numero para identificarlos y -1 si muere
+  var jugadores[16] int
+  for i := 0; i < 16; i++ {
+    jugadores[i] = i
+  }
+  jugadores[4] = -1 //Mato al jugador de la pos 4
+  ronda := 3
+  fin_ronda(jugadores,ronda) //al terminar una ronda se revisa el estado de los jugadores
+  jugadores[7] = -1
+  fin_ronda(jugadores,ronda)
   //var input int
   response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
   log.Printf("Response : %v", response)
@@ -130,15 +140,5 @@ func main(){
     log.Fatalf("failed to serve: %s", err)
   }
   */
-  //Hay que decidir como los tendremos, pensaba un numero para identificarlos y -1 si muere
-  var jugadores[16] int
-  for i := 0; i < 16; i++ {
-    jugadores[i] = i
-  }
-  jugadores[4] = -1 //Mato al jugador de la pos 4
-  ronda := 3
-  fin_ronda(jugadores,ronda) //al terminar una ronda se revisa el estado de los jugadores
-  jugadores[7] = -1
-  fin_ronda(jugadores,ronda)
   return
 }
