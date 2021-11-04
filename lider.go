@@ -109,8 +109,9 @@ func informar_jugador_eliminado(id_jugador int){
 
 func main(){
   //var input int
-  response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
-  log.Printf("Response : %v", response)
+  //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
+  //log.Printf("Response : %v", response)
+  //response = registrar_jugada_nameNode(6 ,1 ,7, "localhost:9100")
   /*
   lis, err := net.Listen("tcp", port)
   if err != nil {
