@@ -250,7 +250,12 @@ func main(){
   //var input int
   //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
   //log.Printf("Response : %v", response)
+<<<<<<< HEAD
+  //response = registrar_jugada_nameNode(6 ,1 ,7, "localhost:9100")
+  /*
+=======
   
+>>>>>>> c6cf409d832a17c46e19132032ea8c5fdf9a7345
   lis, err := net.Listen("tcp", port)
   if err != nil {
     log.Fatalf("failed to listen: %v", err)
