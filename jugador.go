@@ -41,12 +41,15 @@ func intermedio(etapa string){
 func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32) bool{
   var jugada int32
   var estado bool
+  var ganador bool
+  var terminoJuego bool
   var ronda int32 = 1
   fmt.Println("[*] Comenzando primera etapa.")
   fmt.Println("[*] Juego Luz Roja, Luz Verde.")
+  fmt.Println("[*] Para jugar debes elegir un número entre 1 y 10.")
   for ronda <= 4{
     //Lectura de la jugada en cada ronda, hasta un máximo de 4
-    fmt.Println("[*] Ronda", ronda, ".\n[*] Elija entre un número entre 1 y 10.\n[*] Realice su jugada:")
+    fmt.Print("[*] Ronda", ronda, ".\n[*] Realice su jugada: ")
     fmt.Scan(&jugada)
     fmt.Println("[*] Jugada:", jugada)
     
@@ -55,20 +58,31 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
     if err != nil {
       log.Fatalf("Error: %v", err)
     }
-    log.Printf("Número de jugar: %v", respuesta.GetEstado())
+    estado = respuesta.GetEstado()
+    ganador = respuesta.GetGanador()
 
-    estado = true
-
+    //Comprobar si sigue ha sido eliminado el jugador
     if(!estado){
       fmt.Println("[*] Has sido eliminado.\n[*] Gracias por jugar.")
       break
     }
+    //comprobar si ya ha ganado la etapa
+    if ganador {
+      break
+    }
+
+    //Espera del inicio de la siguiente ronda
+    respuesta, err = cliente.InicioRonda(ctx, &pb.RequestRonda{Body: 1})
+    if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
+    terminoJuego = respuesta.GetTerminoJuego()
 
     ronda = ronda + 1
     fmt.Println("[*]\n[*]\n[*]")
   }
   
-  return estado
+  return ganador
 }
 
 func juego_etapa_2() bool{

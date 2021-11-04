@@ -87,7 +87,11 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
 
   for {
     if comienzoEtapa {
-      return &pb.ResponseEtapa{Body: 1}, nil
+      if jugadoresActivos == 1{
+        return &pb.ResponseEtapa{Body: 1, TerminoJuego: true}, nil
+      } else {
+        return &pb.ResponseEtapa{Body: 1, TerminoJuego: false}, nil
+      }
     }
   }
 }
@@ -112,7 +116,11 @@ func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.
 
   for {
     if comienzoRonda {
-      return &pb.ReponseRonda{Body: 1}, nil
+      if jugadoresActivos == 1{
+        return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
+      } else {
+        return &pb.ReponseRonda{Body: 1, TerminoJuego: false}, nil
+      }
     }
   }
 }
@@ -126,8 +134,10 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
   ronda := in.GetRonda()
   jugador := in.GetJugador()
 
+  //Suma de la jugada actual del jugador
   contadorJugadaJugador[jugador - 1] = contadorJugadaJugador[jugador - 1] + jugada
 
+  //Condición cuando el último jugador haya realizado su jugada
   if jugadoresListos == jugadoresActivos && juegoActivo{
     jugadoresListos = 0
     jugadasRecolectadas = true
@@ -136,24 +146,38 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
   }
 
   for {
+    //Cuando todos los jugadores hayan realizado sus jugadas
     if jugadasRecolectadas {
       log.Printf("Ronda %d Jugada del jugador %d: %d", ronda, jugador, jugada)
 
+      //Si un jugador ingresa un número mayor o igual al del lider.
+      //Se debe informar que un jugador ha sido eliminado.
       if jugada >= jugadaLider {
+        jugadoresActivos --
         contadorJugadaJugador[jugador - 1] = -1
-        return &pb.ResponsePrimeraEtapa{Estado: false}, nil
+        return &pb.ResponsePrimeraEtapa{Estado: false, Ganador: false}, nil
       }
 
-      if ronda < 4 {
-        return &pb.ResponsePrimeraEtapa{Estado: true}, nil
-      } else {
+      //Si un jugador logra llegar a los 21, gana
+      if contadorJugadaJugador[jugador - 1] >= 21{
+        return &pb.ResponsePrimeraEtapa{Estado: true, Ganador: true}, nil
+      } 
+
+      //Ronda final
+      if ronda == 4 {
         log.Printf("Conteo del jugador %d: %d", jugador, contadorJugadaJugador[jugador - 1])
+        //Si el jugador llego a la meta.
+        //Caso contrario, se debe informar que se ha eliminado.
         if contadorJugadaJugador[jugador - 1] >= 21 {
-          return &pb.ResponsePrimeraEtapa{Estado: true}, nil
+          return &pb.ResponsePrimeraEtapa{Estado: true, Ganador: true}, nil
         } else {
+          jugadoresActivos --
           contadorJugadaJugador[jugador - 1] = -1
-          return &pb.ResponsePrimeraEtapa{Estado: false}, nil
+          return &pb.ResponsePrimeraEtapa{Estado: false, Ganador: false}, nil
         }
+      } else {
+        //Caso en que debe seguir jugando pero no ha ganado la etapa aún
+        return &pb.ResponsePrimeraEtapa{Estado: true, Ganador: false}, nil
       }
       
     }
@@ -190,6 +214,7 @@ type jugador_eliminado struct {
   Jugador int `json: jugador`
   Ronda int `json: ronda`
 }
+
 func informar_jugador_eliminado(id_jugador int, ronda int){
   conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/") 
   failOnError(err, "Failed to connect to RabbitMQ")
@@ -225,6 +250,7 @@ func informar_jugador_eliminado(id_jugador int, ronda int){
   failOnError(err, "Failed to publish a message")
   log.Printf("[*] Jugador eliminado informado al pozo")
 }
+
 func fin_ronda(jugadores [16]int,ronda int){
   for i := 0; i < 16; i++ {
       if jugadores[i] == -1{
@@ -232,6 +258,7 @@ func fin_ronda(jugadores [16]int,ronda int){
       }
     }
 }
+
 func main(){
   //Seteo de semilla aleatoria para que funcione mejor el random
   rand.Seed(time.Now().UnixNano())
@@ -250,12 +277,7 @@ func main(){
   //var input int
   //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
   //log.Printf("Response : %v", response)
-<<<<<<< HEAD
-  //response = registrar_jugada_nameNode(6 ,1 ,7, "localhost:9100")
-  /*
-=======
-  
->>>>>>> c6cf409d832a17c46e19132032ea8c5fdf9a7345
+
   lis, err := net.Listen("tcp", port)
   if err != nil {
     log.Fatalf("failed to listen: %v", err)
