@@ -25,19 +25,22 @@ type CommServer struct {
   pb.UnimplementedCommServer
 }
 
-func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirse) (*pb.ResponseUnirse, error){
+func (s *CommServer) UnirseJuegoCalamar(stream pb.Comm_UnirseJuegoCalamarClient) error {
   log.Printf("[*] Petición de unirse al juego del calamar recibida.")
-  if juegoActivo {
-    log.Printf("[*] Juego en transcurso. Petición denegada")
-    return &pb.ResponseUnirse{NumeroJugador: 0}, nil
-  } else {
-    log.Printf("[*] Espacio disponible. Petición aceptada")
-    jugadoresActivos = jugadoresActivos + 1
-    if jugadoresActivos == 16{
-      juegoActivo = true
+  for {
+    requestUnirse, err := stream.Recv()
+    if juegoActivo {
+      log.Printf("[*] Juego en transcurso. Petición denegada")
+      return stream.SendAndClose(&pb.ResponseUnirse{NumeroJugador: 0})
+    } else {
+      log.Printf("[*] Espacio disponible. Petición aceptada")
+      jugadoresActivos = jugadoresActivos + 1
+      if jugadoresActivos == 2{
+        juegoActivo = true
+      }
+      log.Printf("[*] Jugadores activos: %d/16", jugadoresActivos)
+      //return stream.SendAndClose(&pb.ResponseUnirse{NumeroJugador: jugadoresActivos})
     }
-    log.Printf("[*] Jugadores activos: %d/16", jugadoresActivos)
-    return &pb.ResponseUnirse{NumeroJugador: jugadoresActivos}, nil
   }
 }
 
