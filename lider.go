@@ -62,7 +62,7 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
         log.Printf("[*] Si")
       }else {
         log.Printf("[*] No")
-      }    
+      }
       comienzoEtapa = true
     }
 
@@ -87,7 +87,7 @@ func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.
         log.Printf("[*] Si")
       }else {
         log.Printf("[*] No")
-      }    
+      }
       comienzoRonda = true
     }
 
@@ -135,7 +135,7 @@ type jugador_eliminado struct {
   Ronda int `json: ronda`
 }
 func informar_jugador_eliminado(id_jugador int, ronda int){
-  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/") 
+  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
   failOnError(err, "Failed to connect to RabbitMQ")
   defer conn.Close()
   ch, err := conn.Channel()
@@ -190,12 +190,7 @@ func main(){
   //var input int
   //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
   //log.Printf("Response : %v", response)
-<<<<<<< HEAD
-  //response = registrar_jugada_nameNode(6 ,1 ,7, "localhost:9100")
-  /*
-=======
   
->>>>>>> c6cf409d832a17c46e19132032ea8c5fdf9a7345
   lis, err := net.Listen("tcp", port)
   if err != nil {
     log.Fatalf("failed to listen: %v", err)
