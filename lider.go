@@ -18,17 +18,36 @@ const (
   capacidadJugadores = 2
 )
 
+//
 var jugadoresActivos int32 = 0
-var jugadoresListosEtapa int32 = 0
-var jugadoresListosRonda int32 = 0
+var jugadoresListos int32 = 0
+
+//
 var juegoActivo bool = false
 var comienzoEtapa bool = false
 var comienzoRonda bool = false
-
+var jugadasRecolectadas bool = false
 var bloqueo bool = false
+
+//
+var contadorJugadaJugador [capacidadJugadores]int32
+var jugadaLider int32
 
 type CommServer struct {
   pb.UnimplementedCommServer
+}
+
+func random(min, max int) int32 {
+  return int32(rand.Intn(max-min+1) + min)
+}
+
+func resetContadorJugadores() (){
+  for i := 0; i < capacidadJugadores; i++ {
+    if contadorJugadaJugador[i] != -1 {
+      contadorJugadaJugador[i] = 0
+    }
+  }
+  return
 }
 
 func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirse) (*pb.ResponseUnirse, error){
@@ -51,8 +70,9 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
   var input int
   bloqueo = false
   comienzoEtapa = false
-  jugadoresListosEtapa ++
+  jugadoresListos ++
 
+<<<<<<< HEAD
   for {
     if jugadoresListosEtapa == jugadoresActivos && juegoActivo && !bloqueo{
       bloqueo = true
@@ -62,10 +82,25 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
         log.Printf("[*] Si")
       }else {
         log.Printf("[*] No")
-      }    
+      }
       comienzoEtapa = true
     }
+=======
+  if jugadoresListos == jugadoresActivos && juegoActivo{
+    log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
+    fmt.Scan(&input)
+    if input == 1{
+      log.Printf("[*] Si")
+    }else {
+      log.Printf("[*] No")
+    }
+    comienzoEtapa = true
+    jugadoresListos = 0
+    resetContadorJugadores()
+  }
+>>>>>>> 0aa4437ea9999b5e3ced953138a8f71521a5f650
 
+  for {
     if comienzoEtapa {
       return &pb.ResponseEtapa{Body: 1}, nil
     }
@@ -76,21 +111,21 @@ func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.
   var input int
   bloqueo = false
   comienzoRonda = false
-  jugadoresListosRonda ++
+  jugadoresListos ++
+
+  if jugadoresListos == jugadoresActivos && juegoActivo{
+    log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
+    fmt.Scan(&input)
+    if input == 1{
+      log.Printf("[*] Si")
+    }else {
+      log.Printf("[*] No")
+    }
+    comienzoRonda = true
+    jugadoresListos = 0
+  }
 
   for {
-    if jugadoresListosRonda == jugadoresActivos && juegoActivo && !bloqueo{
-      bloqueo = true
-      log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
-      fmt.Scan(&input)
-      if input == 1{
-        log.Printf("[*] Si")
-      }else {
-        log.Printf("[*] No")
-      }    
-      comienzoRonda = true
-    }
-
     if comienzoRonda {
       return &pb.ReponseRonda{Body: 1}, nil
     }
@@ -98,12 +133,48 @@ func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.
 }
 
 func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrimeraEtapa) (*pb.ResponsePrimeraEtapa, error) {
-  return &pb.ResponsePrimeraEtapa{Estado: true}, nil
+  bloqueo = false
+  jugadasRecolectadas = false
+  jugadoresListos ++
+
+  jugada := in.GetJugada()
+  ronda := in.GetRonda()
+  jugador := in.GetJugador()
+
+  contadorJugadaJugador[jugador - 1] = contadorJugadaJugador[jugador - 1] + jugada
+
+  if jugadoresListos == jugadoresActivos && juegoActivo{
+    jugadoresListos = 0
+    jugadasRecolectadas = true
+    jugadaLider = random(6, 10)
+    log.Printf("Jugada del lider: %d", jugadaLider)
+  }
+
+  for {
+    if jugadasRecolectadas {
+      log.Printf("Ronda %d Jugada del jugador %d: %d", ronda, jugador, jugada)
+
+      if jugada >= jugadaLider {
+        contadorJugadaJugador[jugador - 1] = -1
+        return &pb.ResponsePrimeraEtapa{Estado: false}, nil
+      }
+
+      if ronda < 4 {
+        return &pb.ResponsePrimeraEtapa{Estado: true}, nil
+      } else {
+        log.Printf("Conteo del jugador %d: %d", jugador, contadorJugadaJugador[jugador - 1])
+        if contadorJugadaJugador[jugador - 1] >= 21 {
+          return &pb.ResponsePrimeraEtapa{Estado: true}, nil
+        } else {
+          contadorJugadaJugador[jugador - 1] = -1
+          return &pb.ResponsePrimeraEtapa{Estado: false}, nil
+        }
+      }
+
+    }
+  }
 }
 
-func random(min, max int) int {
-  return rand.Intn(max-min) + min
-}
 func failOnError(err error, msg string) {
   if err != nil {
     log.Fatalf("%s: %s", msg, err)
@@ -135,7 +206,7 @@ type jugador_eliminado struct {
   Ronda int `json: ronda`
 }
 func informar_jugador_eliminado(id_jugador int, ronda int){
-  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/") 
+  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
   failOnError(err, "Failed to connect to RabbitMQ")
   defer conn.Close()
   ch, err := conn.Channel()
@@ -177,6 +248,9 @@ func fin_ronda(jugadores [16]int,ronda int){
     }
 }
 func main(){
+  //Seteo de semilla aleatoria para que funcione mejor el random
+  rand.Seed(time.Now().UnixNano())
+  /*
   //Hay que decidir como los tendremos, pensaba un numero para identificarlos y -1 si muere
   var jugadores[16] int
   for i := 0; i < 16; i++ {
@@ -187,10 +261,11 @@ func main(){
   fin_ronda(jugadores,ronda) //al terminar una ronda se revisa el estado de los jugadores
   jugadores[7] = -1
   fin_ronda(jugadores,ronda)
+  */
   //var input int
   //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
   //log.Printf("Response : %v", response)
-  
+
   lis, err := net.Listen("tcp", port)
   if err != nil {
     log.Fatalf("failed to listen: %v", err)
