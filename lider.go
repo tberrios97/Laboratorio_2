@@ -52,9 +52,28 @@ func failOnError(err error, msg string) {
   }
 }
 
+func registrar_jugada_nameNode(id_jugador int, num_ronda int, jugada int, direccion_nameNode string){
+  conn, err := grpc.Dial(direccion_nameNode, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("No se pudo lograr conexión: %v", err)
+	}
+	defer conn.Close()
+
+	c := pb.NewCommClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	response, err := c.RegistrarJugadaJugador(ctx, &pb.RequestRJJ{N_jugador: id_jugador, N_ronda: num_ronda, Jugada: jugada})
+	if err != nil {
+		log.Fatalf("Error al hacer request a servidor: %v", err)
+	}
+	log.Printf("Response desde Data Node: %v", response.Body)
+}
+
 func informar_jugador_eliminado(id_jugador int){
   //Se crea ña conexión y se abre el canal para el paso de mensajes:
-  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/") 
+  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
   failOnError(err, "Failed to connect to RabbitMQ")
   defer conn.Close()
 
@@ -85,10 +104,12 @@ func informar_jugador_eliminado(id_jugador int){
     })
   failOnError(err, "Failed to publish a message")
   log.Printf(" [*] Mensaje enviado al Pozo: %s", body)
+  return &body
 }
 
 func main(){
   //var input int
+  response := registrar_jugada_nameNode(6 ,1 ,4, "localhost")
 
   lis, err := net.Listen("tcp", port)
   if err != nil {

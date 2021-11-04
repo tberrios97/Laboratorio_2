@@ -11,6 +11,9 @@ service Comm {
   rpc JugadaPrimeraEtapa(RequestPrimeraEtapa) returns (ResponsePrimeraEtapa) {}
   rpc JugadaSegundaEtapa(RequestSegundaEtapa) returns (ResponseSegundaEtapa) {}
   rpc JugadaTerceraEtapa(RequestTerceraEtapa) returns (ResponseTerceraEtapa) {}
+
+  rpc RegistrarJugadaJugador(RequestRJJ) returns (ResponseRJJ) {}
+  rpc RegistrarJugadaDN(RequestRJDN) returns (ResponseRJDN) {}
 }
 
 message RequestUnirse {
@@ -54,6 +57,30 @@ message ResponseTerceraEtapa {
   int32 estado = 1;
 }
 
+
+
+message RequestRJDN {
+  int32 n_jugador = 1;
+  int32 n_ronda = 2;
+  int32 jugada = 3;
+}
+
+message ResponseRJDN {
+  string body = 1;
+}
+
+message RequestRJJ {
+  int32 n_jugador = 1;
+  int32 n_ronda = 2;
+  int32 jugada = 3;
+}
+
+message ResponseRJJ {
+  string body = 1;
+}
+
+
+
 message RequestTest {
   string body = 1;
 }
@@ -61,4 +88,3 @@ message RequestTest {
 message ResponseTest {
   string body = 1;
 }
-
