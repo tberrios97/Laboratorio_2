@@ -25,7 +25,7 @@ type CommClient interface {
 	JugadaPrimeraEtapa(ctx context.Context, in *RequestPrimeraEtapa, opts ...grpc.CallOption) (*ResponsePrimeraEtapa, error)
 	JugadaSegundaEtapa(ctx context.Context, in *RequestSegundaEtapa, opts ...grpc.CallOption) (*ResponseSegundaEtapa, error)
 	JugadaTerceraEtapa(ctx context.Context, in *RequestTerceraEtapa, opts ...grpc.CallOption) (*ResponseTerceraEtapa, error)
-	RegistrarJugadaJugador(ctx context.Context, opts ...grpc.CallOption) (Comm_RegistrarJugadaJugadorClient, error)
+	RegistrarJugadaJugador(ctx context.Context, in *RequestRJJ, opts ...grpc.CallOption) (*ResponseRJJ, error)
 	RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opts ...grpc.CallOption) (*ResponseRJDN, error)
 }
 
@@ -100,38 +100,13 @@ func (c *commClient) JugadaTerceraEtapa(ctx context.Context, in *RequestTerceraE
 	return out, nil
 }
 
-func (c *commClient) RegistrarJugadaJugador(ctx context.Context, opts ...grpc.CallOption) (Comm_RegistrarJugadaJugadorClient, error) {
-	stream, err := c.cc.NewStream(ctx, &Comm_ServiceDesc.Streams[0], "/comm.Comm/RegistrarJugadaJugador", opts...)
+func (c *commClient) RegistrarJugadaJugador(ctx context.Context, in *RequestRJJ, opts ...grpc.CallOption) (*ResponseRJJ, error) {
+	out := new(ResponseRJJ)
+	err := c.cc.Invoke(ctx, "/comm.Comm/RegistrarJugadaJugador", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &commRegistrarJugadaJugadorClient{stream}
-	return x, nil
-}
-
-type Comm_RegistrarJugadaJugadorClient interface {
-	Send(*RequestRJJ) error
-	CloseAndRecv() (*ResponseRJJ, error)
-	grpc.ClientStream
-}
-
-type commRegistrarJugadaJugadorClient struct {
-	grpc.ClientStream
-}
-
-func (x *commRegistrarJugadaJugadorClient) Send(m *RequestRJJ) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *commRegistrarJugadaJugadorClient) CloseAndRecv() (*ResponseRJJ, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(ResponseRJJ)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 func (c *commClient) RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opts ...grpc.CallOption) (*ResponseRJDN, error) {
@@ -154,7 +129,7 @@ type CommServer interface {
 	JugadaPrimeraEtapa(context.Context, *RequestPrimeraEtapa) (*ResponsePrimeraEtapa, error)
 	JugadaSegundaEtapa(context.Context, *RequestSegundaEtapa) (*ResponseSegundaEtapa, error)
 	JugadaTerceraEtapa(context.Context, *RequestTerceraEtapa) (*ResponseTerceraEtapa, error)
-	RegistrarJugadaJugador(Comm_RegistrarJugadaJugadorServer) error
+	RegistrarJugadaJugador(context.Context, *RequestRJJ) (*ResponseRJJ, error)
 	RegistrarJugadaDN(context.Context, *RequestRJDN) (*ResponseRJDN, error)
 	mustEmbedUnimplementedCommServer()
 }
@@ -184,8 +159,8 @@ func (UnimplementedCommServer) JugadaSegundaEtapa(context.Context, *RequestSegun
 func (UnimplementedCommServer) JugadaTerceraEtapa(context.Context, *RequestTerceraEtapa) (*ResponseTerceraEtapa, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JugadaTerceraEtapa not implemented")
 }
-func (UnimplementedCommServer) RegistrarJugadaJugador(Comm_RegistrarJugadaJugadorServer) error {
-	return status.Errorf(codes.Unimplemented, "method RegistrarJugadaJugador not implemented")
+func (UnimplementedCommServer) RegistrarJugadaJugador(context.Context, *RequestRJJ) (*ResponseRJJ, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegistrarJugadaJugador not implemented")
 }
 func (UnimplementedCommServer) RegistrarJugadaDN(context.Context, *RequestRJDN) (*ResponseRJDN, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegistrarJugadaDN not implemented")
@@ -329,30 +304,22 @@ func _Comm_JugadaTerceraEtapa_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Comm_RegistrarJugadaJugador_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(CommServer).RegistrarJugadaJugador(&commRegistrarJugadaJugadorServer{stream})
-}
-
-type Comm_RegistrarJugadaJugadorServer interface {
-	SendAndClose(*ResponseRJJ) error
-	Recv() (*RequestRJJ, error)
-	grpc.ServerStream
-}
-
-type commRegistrarJugadaJugadorServer struct {
-	grpc.ServerStream
-}
-
-func (x *commRegistrarJugadaJugadorServer) SendAndClose(m *ResponseRJJ) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *commRegistrarJugadaJugadorServer) Recv() (*RequestRJJ, error) {
-	m := new(RequestRJJ)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
+func _Comm_RegistrarJugadaJugador_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestRJJ)
+	if err := dec(in); err != nil {
 		return nil, err
 	}
-	return m, nil
+	if interceptor == nil {
+		return srv.(CommServer).RegistrarJugadaJugador(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/comm.Comm/RegistrarJugadaJugador",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommServer).RegistrarJugadaJugador(ctx, req.(*RequestRJJ))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Comm_RegistrarJugadaDN_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -409,16 +376,14 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Comm_JugadaTerceraEtapa_Handler,
 		},
 		{
+			MethodName: "RegistrarJugadaJugador",
+			Handler:    _Comm_RegistrarJugadaJugador_Handler,
+		},
+		{
 			MethodName: "RegistrarJugadaDN",
 			Handler:    _Comm_RegistrarJugadaDN_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "RegistrarJugadaJugador",
-			Handler:       _Comm_RegistrarJugadaJugador_Handler,
-			ClientStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "comm/comm.proto",
 }
