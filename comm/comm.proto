@@ -13,7 +13,7 @@ service Comm {
   rpc JugadaSegundaEtapa(RequestSegundaEtapa) returns (ResponseSegundaEtapa) {}
   rpc JugadaTerceraEtapa(RequestTerceraEtapa) returns (ResponseTerceraEtapa) {}
 
-  rpc RegistrarJugadaJugador(RequestRJJ) returns (ResponseRJJ) {}
+  rpc RegistrarJugadaJugador(stream RequestRJJ) returns (ResponseRJJ) {}
   rpc RegistrarJugadaDN(RequestRJDN) returns (ResponseRJDN) {}
 }
 
