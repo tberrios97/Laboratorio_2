@@ -1,37 +1,57 @@
 package main
 
 import (
-  "fmt"
+  "net"
+  "log"
   "time"
+  "strconv"
+  "context"
   //"strings"
   "math/rand"
-  "log"
-  "strconv"
+  "google.golang.org/grpc"
   "github.com/streadway/amqp"
+  pb "example.com/go-comm-grpc/comm"
+  
 )
+
+var jugadoresActivos int32 = 0
+var juegoActivo bool = false
+
+const (
+  port = ":9000"
+)
+
+type CommServer struct {
+  pb.UnimplementedCommServer
+}
+
+func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirse) (*pb.ResponseUnirse, error){
+  log.Printf("[*] Petición de unirse al juego del calamar recibida.")
+  if juegoActivo {
+    log.Printf("[*] Juego en transcurso. Petición denegada")
+    return &pb.ResponseUnirse{NumeroJugador: 0}, nil
+  } else {
+    log.Printf("[*] Espacio disponible. Petición aceptada")
+    jugadoresActivos = jugadoresActivos + 1
+    if jugadoresActivos == 16{
+      juegoActivo = true
+    }
+    log.Printf("[*] Jugadores activos: %d/16", jugadoresActivos)
+    return &pb.ResponseUnirse{NumeroJugador: jugadoresActivos}, nil
+  }
+}
 
 func random(min, max int) int {
   //49152-65535
   return rand.Intn(max-min) + min
 }
-/*
-func juego_etapa_1() bool{
 
-}
-
-func juego_etapa_2() bool{
-
-}
-
-func juego_etapa_3() bool{
-
-}
-*/
 func failOnError(err error, msg string) {
   if err != nil {
     log.Fatalf("%s: %s", msg, err)
   }
 }
+
 func informar_jugador_eliminado(id_jugador int){
   //Se crea ña conexión y se abre el canal para el paso de mensajes:
   conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/") 
@@ -66,58 +86,25 @@ func informar_jugador_eliminado(id_jugador int){
   failOnError(err, "Failed to publish a message")
   log.Printf(" [*] Mensaje enviado al Pozo: %s", body)
 }
+
 func main(){
-  var input int
-  //var pozo int
-  //var jugando bool
+  //var input int
 
-  fmt.Println("[*] Bienvenido a SquidGame.\n[*] ¿Deseas unirte?.\n[*] (1) Si.\t(2) No.")
-  fmt.Scan(&input)
-
-  //Enviar petición al Lider si se desea jugar. En otro caso, cerrar programa.
-  if input == 1 {
-    //Enviar petición
-    fmt.Println("[*] Iniciando contacto con el Líder.")
-    //Establecer conexión al juego y recibir cuando este listo para jugar
-
-    //...
-
-    //Comenzar primera etapa
-    /*
-    jugando = juego_etapa_1()
-
-    if !jugando{
-      fmt.Println("[*] Finalizando programa de SquidGame.")
-      return
-    }
-
-    intermedio("primera")
-
-    jugando = juego_etapa_2()
-
-    if !jugando{
-      fmt.Println("[*] Finalizando programa de SquidGame.")
-      return
-    }
-
-    intermedio("segunda")
-
-    jugando = juego_etapa_3()
-
-    if !jugando{
-      fmt.Println("[*] Finalizando programa de SquidGame.")
-      return
-    }
-
-    pozo = 100
-    fmt.Println("[*] Feliciticaciones, has sido uno de los ganadores.\n[*] Has ganado", pozo, "KRW")
-    */
-
-  } else{
-    informar_jugador_eliminado(input)
+  lis, err := net.Listen("tcp", port)
+  if err != nil {
+    log.Fatalf("failed to listen: %v", err)
   }
 
-  //Cerrar programa
-  fmt.Println("[*] Finalizando programa de SquidGame.")
+  s := grpc.NewServer()
+
+  pb.RegisterCommServer(s, &CommServer{})
+
+  log.Printf("Servidor escuchando en %v", lis.Addr())
+
+  if err := s.Serve(lis); err != nil {
+    log.Fatalf("failed to serve: %s", err)
+  }
+
+
   return
 }
