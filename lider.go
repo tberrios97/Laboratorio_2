@@ -72,20 +72,6 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
   comienzoEtapa = false
   jugadoresListos ++
 
-<<<<<<< HEAD
-  for {
-    if jugadoresListosEtapa == jugadoresActivos && juegoActivo && !bloqueo{
-      bloqueo = true
-      log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
-      fmt.Scan(&input)
-      if input == 1{
-        log.Printf("[*] Si")
-      }else {
-        log.Printf("[*] No")
-      }
-      comienzoEtapa = true
-    }
-=======
   if jugadoresListos == jugadoresActivos && juegoActivo{
     log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
     fmt.Scan(&input)
@@ -98,7 +84,6 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
     jugadoresListos = 0
     resetContadorJugadores()
   }
->>>>>>> 0aa4437ea9999b5e3ced953138a8f71521a5f650
 
   for {
     if comienzoEtapa {
