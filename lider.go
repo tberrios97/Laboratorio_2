@@ -1,8 +1,9 @@
 package main
 
 import (
-  //"net"
+  "net"
   "log"
+  "fmt"
   "time"
   "strconv"
   "context"
@@ -11,37 +12,95 @@ import (
   "google.golang.org/grpc"
   "github.com/streadway/amqp"
   pb "example.com/go-comm-grpc/comm"
-
+  
 )
-
-var jugadoresActivos int32 = 0
-var juegoActivo bool = false
 
 const (
   port = ":9000"
+  capacidadJugadores = 2
 )
+
+var jugadoresActivos int32 = 0
+var jugadoresListosEtapa int32 = 0
+var jugadoresListosRonda int32 = 0
+var juegoActivo bool = false
+var comienzoEtapa bool = false
+var comienzoRonda bool = false
+
+var bloqueo bool = false
 
 type CommServer struct {
   pb.UnimplementedCommServer
 }
 
-func (s *CommServer) UnirseJuegoCalamar(stream pb.Comm_UnirseJuegoCalamarClient) error {
+func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirse) (*pb.ResponseUnirse, error){
   log.Printf("[*] Petición de unirse al juego del calamar recibida.")
+  if juegoActivo || jugadoresActivos >= capacidadJugadores{
+    log.Printf("[*] Juego en transcurso. Petición denegada")
+    return &pb.ResponseUnirse{NumeroJugador: 0}, nil
+  } else {
+    log.Printf("[*] Espacio disponible. Petición aceptada")
+    jugadoresActivos ++
+    if jugadoresActivos == capacidadJugadores {
+      juegoActivo = true
+    }
+    log.Printf("[*] Jugadores activos: %d/%d", jugadoresActivos, capacidadJugadores)
+    return &pb.ResponseUnirse{NumeroJugador: jugadoresActivos}, nil
+  }
+}
+
+func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.ResponseEtapa, error){
+  var input int
+  bloqueo = false
+  comienzoEtapa = false
+  jugadoresListosEtapa ++
+
   for {
-    requestUnirse, err := stream.Recv()
-    if juegoActivo {
-      log.Printf("[*] Juego en transcurso. Petición denegada")
-      return stream.SendAndClose(&pb.ResponseUnirse{NumeroJugador: 0})
-    } else {
-      log.Printf("[*] Espacio disponible. Petición aceptada")
-      jugadoresActivos = jugadoresActivos + 1
-      if jugadoresActivos == 2{
-        juegoActivo = true
-      }
-      log.Printf("[*] Jugadores activos: %d/16", jugadoresActivos)
-      //return stream.SendAndClose(&pb.ResponseUnirse{NumeroJugador: jugadoresActivos})
+    if jugadoresListosEtapa == jugadoresActivos && juegoActivo && !bloqueo{
+      bloqueo = true
+      log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
+      fmt.Scan(&input)
+      if input == 1{
+        log.Printf("[*] Si")
+      }else {
+        log.Printf("[*] No")
+      }    
+      comienzoEtapa = true
+    }
+
+    if comienzoEtapa {
+      return &pb.ResponseEtapa{Body: 1}, nil
     }
   }
+}
+
+func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.ReponseRonda, error){
+  var input int
+  bloqueo = false
+  comienzoRonda = false
+  jugadoresListosRonda ++
+
+  for {
+    if jugadoresListosRonda == jugadoresActivos && juegoActivo && !bloqueo{
+      bloqueo = true
+      log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
+      fmt.Scan(&input)
+      if input == 1{
+        log.Printf("[*] Si")
+      }else {
+        log.Printf("[*] No")
+      }    
+      comienzoRonda = true
+    }
+
+    if comienzoRonda {
+      return &pb.ReponseRonda{Body: 1}, nil
+    }
+  }
+}
+
+func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrimeraEtapa) (*pb.ResponsePrimeraEtapa, error) {
+  return &pb.ResponsePrimeraEtapa{Estado: true}, nil
 }
 
 func random(min, max int) int {
@@ -112,9 +171,9 @@ func informar_jugador_eliminado(id_jugador int){
 
 func main(){
   //var input int
-  response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
-  log.Printf("Response : %v", response)
-  /*
+  //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
+  //log.Printf("Response : %v", response)
+  
   lis, err := net.Listen("tcp", port)
   if err != nil {
     log.Fatalf("failed to listen: %v", err)
@@ -129,7 +188,7 @@ func main(){
   if err := s.Serve(lis); err != nil {
     log.Fatalf("failed to serve: %s", err)
   }
-  */
+
 
   return
 }

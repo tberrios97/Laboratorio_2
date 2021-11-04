@@ -7,7 +7,8 @@ option go_package = "example.com/go-comm-grpc;go_comm_grpc";
 service Comm {
   rpc FunTest(RequestTest) returns (ResponseTest) {}
   rpc UnirseJuegoCalamar(RequestUnirse) returns (ResponseUnirse) {}
-  rpc InicioEtapa(RequestInicio) returns (ResponseInicio) {}
+  rpc InicioEtapa(RequestEtapa) returns (ResponseEtapa) {}
+  rpc InicioRonda(RequestRonda) returns (ReponseRonda) {}
   rpc JugadaPrimeraEtapa(RequestPrimeraEtapa) returns (ResponsePrimeraEtapa) {}
   rpc JugadaSegundaEtapa(RequestSegundaEtapa) returns (ResponseSegundaEtapa) {}
   rpc JugadaTerceraEtapa(RequestTerceraEtapa) returns (ResponseTerceraEtapa) {}
@@ -16,45 +17,69 @@ service Comm {
   rpc RegistrarJugadaDN(RequestRJDN) returns (ResponseRJDN) {}
 }
 
+
+
+message RequestTest {
+  string body = 1;
+}
+
+message ResponseTest {
+  string body = 1;
+}
+
+
+
 message RequestUnirse {
   int32 body = 1;
 }
 
-message ResponseUnirse {
-  int32 numeroJugador = 1;
-}
-
-message RequestInicio {
+message RequestEtapa {
   int32 body = 1;
 }
 
-message ResponseInicio {
+message RequestRonda {
   int32 body = 1;
 }
 
 message RequestPrimeraEtapa {
   int32 jugada = 1;
   int32 ronda = 2;
+  int32 jugador = 3;
 }
 
 message RequestSegundaEtapa {
   int32 jugada = 1;
+  int32 jugador = 2;
 }
 
 message RequestTerceraEtapa {
   int32 jugada = 1;
+  int32 jugador = 2;
+}
+
+
+message ResponseUnirse {
+  int32 numeroJugador = 1;
+}
+
+message ResponseEtapa {
+  int32 body = 1;
+}
+
+message ReponseRonda {
+  int32 body = 1;
 }
 
 message ResponsePrimeraEtapa {
-  int32 estado = 1;
+  bool estado = 1;
 }
 
 message ResponseSegundaEtapa {
-  int32 estado = 1;
+  bool estado = 1;
 }
 
 message ResponseTerceraEtapa {
-  int32 estado = 1;
+  bool estado = 1;
 }
 
 
@@ -79,12 +104,3 @@ message ResponseRJJ {
   string body = 1;
 }
 
-
-
-message RequestTest {
-  string body = 1;
-}
-
-message ResponseTest {
-  string body = 1;
-}
