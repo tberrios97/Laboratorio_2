@@ -27,6 +27,8 @@ type CommClient interface {
 	JugadaTerceraEtapa(ctx context.Context, in *RequestTerceraEtapa, opts ...grpc.CallOption) (*ResponseTerceraEtapa, error)
 	RegistrarJugadaJugador(ctx context.Context, in *RequestRJJ, opts ...grpc.CallOption) (*ResponseRJJ, error)
 	RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opts ...grpc.CallOption) (*ResponseRJDN, error)
+	BuscarJugada(ctx context.Context, in *RequestBJ, opts ...grpc.CallOption) (Comm_BuscarJugadaClient, error)
+	ObtenerJugada(ctx context.Context, in *RequestOJ, opts ...grpc.CallOption) (Comm_ObtenerJugadaClient, error)
 }
 
 type commClient struct {
@@ -118,6 +120,70 @@ func (c *commClient) RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opt
 	return out, nil
 }
 
+func (c *commClient) BuscarJugada(ctx context.Context, in *RequestBJ, opts ...grpc.CallOption) (Comm_BuscarJugadaClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Comm_ServiceDesc.Streams[0], "/comm.Comm/BuscarJugada", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &commBuscarJugadaClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Comm_BuscarJugadaClient interface {
+	Recv() (*ResponseBJ, error)
+	grpc.ClientStream
+}
+
+type commBuscarJugadaClient struct {
+	grpc.ClientStream
+}
+
+func (x *commBuscarJugadaClient) Recv() (*ResponseBJ, error) {
+	m := new(ResponseBJ)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *commClient) ObtenerJugada(ctx context.Context, in *RequestOJ, opts ...grpc.CallOption) (Comm_ObtenerJugadaClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Comm_ServiceDesc.Streams[1], "/comm.Comm/ObtenerJugada", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &commObtenerJugadaClient{stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type Comm_ObtenerJugadaClient interface {
+	Recv() (*ResponseOJ, error)
+	grpc.ClientStream
+}
+
+type commObtenerJugadaClient struct {
+	grpc.ClientStream
+}
+
+func (x *commObtenerJugadaClient) Recv() (*ResponseOJ, error) {
+	m := new(ResponseOJ)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // CommServer is the server API for Comm service.
 // All implementations must embed UnimplementedCommServer
 // for forward compatibility
@@ -131,6 +197,8 @@ type CommServer interface {
 	JugadaTerceraEtapa(context.Context, *RequestTerceraEtapa) (*ResponseTerceraEtapa, error)
 	RegistrarJugadaJugador(context.Context, *RequestRJJ) (*ResponseRJJ, error)
 	RegistrarJugadaDN(context.Context, *RequestRJDN) (*ResponseRJDN, error)
+	BuscarJugada(*RequestBJ, Comm_BuscarJugadaServer) error
+	ObtenerJugada(*RequestOJ, Comm_ObtenerJugadaServer) error
 	mustEmbedUnimplementedCommServer()
 }
 
@@ -164,6 +232,12 @@ func (UnimplementedCommServer) RegistrarJugadaJugador(context.Context, *RequestR
 }
 func (UnimplementedCommServer) RegistrarJugadaDN(context.Context, *RequestRJDN) (*ResponseRJDN, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegistrarJugadaDN not implemented")
+}
+func (UnimplementedCommServer) BuscarJugada(*RequestBJ, Comm_BuscarJugadaServer) error {
+	return status.Errorf(codes.Unimplemented, "method BuscarJugada not implemented")
+}
+func (UnimplementedCommServer) ObtenerJugada(*RequestOJ, Comm_ObtenerJugadaServer) error {
+	return status.Errorf(codes.Unimplemented, "method ObtenerJugada not implemented")
 }
 func (UnimplementedCommServer) mustEmbedUnimplementedCommServer() {}
 
@@ -340,6 +414,48 @@ func _Comm_RegistrarJugadaDN_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Comm_BuscarJugada_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RequestBJ)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CommServer).BuscarJugada(m, &commBuscarJugadaServer{stream})
+}
+
+type Comm_BuscarJugadaServer interface {
+	Send(*ResponseBJ) error
+	grpc.ServerStream
+}
+
+type commBuscarJugadaServer struct {
+	grpc.ServerStream
+}
+
+func (x *commBuscarJugadaServer) Send(m *ResponseBJ) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Comm_ObtenerJugada_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(RequestOJ)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(CommServer).ObtenerJugada(m, &commObtenerJugadaServer{stream})
+}
+
+type Comm_ObtenerJugadaServer interface {
+	Send(*ResponseOJ) error
+	grpc.ServerStream
+}
+
+type commObtenerJugadaServer struct {
+	grpc.ServerStream
+}
+
+func (x *commObtenerJugadaServer) Send(m *ResponseOJ) error {
+	return x.ServerStream.SendMsg(m)
+}
+
 // Comm_ServiceDesc is the grpc.ServiceDesc for Comm service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -384,6 +500,17 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Comm_RegistrarJugadaDN_Handler,
 		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "BuscarJugada",
+			Handler:       _Comm_BuscarJugada_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "ObtenerJugada",
+			Handler:       _Comm_ObtenerJugada_Handler,
+			ServerStreams: true,
+		},
+	},
 	Metadata: "comm/comm.proto",
 }
