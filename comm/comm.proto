@@ -66,14 +66,17 @@ message ResponseUnirse {
 
 message ResponseEtapa {
   int32 body = 1;
+  bool terminoJuego = 2;
 }
 
 message ReponseRonda {
   int32 body = 1;
+  bool terminoJuego = 2;
 }
 
 message ResponsePrimeraEtapa {
   bool estado = 1;
+  bool ganador = 2;
 }
 
 message ResponseSegundaEtapa {
