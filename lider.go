@@ -2,17 +2,15 @@ package main
 
 import (
   "net"
+  "encoding/json"
   "log"
   "fmt"
   "time"
-  "strconv"
   "context"
-  //"strings"
   "math/rand"
   "google.golang.org/grpc"
   "github.com/streadway/amqp"
   pb "example.com/go-comm-grpc/comm"
-  
 )
 
 const (
@@ -104,10 +102,8 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
 }
 
 func random(min, max int) int {
-  //49152-65535
   return rand.Intn(max-min) + min
 }
-
 func failOnError(err error, msg string) {
   if err != nil {
     log.Fatalf("%s: %s", msg, err)
@@ -116,30 +112,32 @@ func failOnError(err error, msg string) {
 
 func registrar_jugada_nameNode(id_jugador int32, num_ronda int32, jugada int32, direccion_nameNode string) string{
   conn, err := grpc.Dial(direccion_nameNode, grpc.WithInsecure(), grpc.WithBlock())
-	if err != nil {
-		log.Fatalf("No se pudo lograr conexión: %v", err)
-	}
-	defer conn.Close()
+  if err != nil {
+    log.Fatalf("No se pudo lograr conexión: %v", err)
+  }
+  defer conn.Close()
 
-	c := pb.NewCommClient(conn)
+  c := pb.NewCommClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  defer cancel()
 
-	response, err := c.RegistrarJugadaJugador(ctx, &pb.RequestRJJ{NJugador: id_jugador, NRonda: num_ronda, Jugada: jugada})
-	if err != nil {
-		log.Fatalf("Error al hacer request a servidor: %v", err)
-	}
-	log.Printf("Response desde Data Node: %v", response.Body)
+  response, err := c.RegistrarJugadaJugador(ctx, &pb.RequestRJJ{NJugador: id_jugador, NRonda: num_ronda, Jugada: jugada})
+  if err != nil {
+    log.Fatalf("Error al hacer request a servidor: %v", err)
+  }
+  log.Printf("Response desde Data Node: %v", response.Body)
   return response.Body
 }
 
-func informar_jugador_eliminado(id_jugador int){
-  //Se crea ña conexión y se abre el canal para el paso de mensajes:
-  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+type jugador_eliminado struct {
+  Jugador int `json: jugador`
+  Ronda int `json: ronda`
+}
+func informar_jugador_eliminado(id_jugador int, ronda int){
+  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/") 
   failOnError(err, "Failed to connect to RabbitMQ")
   defer conn.Close()
-
   ch, err := conn.Channel()
   failOnError(err, "Failed to open a channel")
   defer ch.Close()
@@ -153,9 +151,12 @@ func informar_jugador_eliminado(id_jugador int){
     nil,     // arguments
   )
   failOnError(err, "Failed to declare a queue")
-  rand.Seed(time.Now().UnixNano())
-  jugador := strconv.Itoa(id_jugador)
-  body := "Jugador Eliminado "+jugador
+
+  data := jugador_eliminado{
+    Jugador: id_jugador,
+    Ronda: ronda,
+  }
+  dataBytes,err := json.Marshal(data)
   err = ch.Publish(
     "",     // exchange
     q.Name, // routing key
@@ -163,13 +164,29 @@ func informar_jugador_eliminado(id_jugador int){
     false,  // immediate
     amqp.Publishing{
       ContentType: "text/plain",
-      Body:        []byte(body),
+      Body:        dataBytes,
     })
   failOnError(err, "Failed to publish a message")
-  log.Printf(" [*] Mensaje enviado al Pozo: %s", body)
+  log.Printf("[*] Jugador eliminado informado al pozo")
 }
-
+func fin_ronda(jugadores [16]int,ronda int){
+  for i := 0; i < 16; i++ {
+      if jugadores[i] == -1{
+        informar_jugador_eliminado(i, ronda)
+      }
+    }
+}
 func main(){
+  //Hay que decidir como los tendremos, pensaba un numero para identificarlos y -1 si muere
+  var jugadores[16] int
+  for i := 0; i < 16; i++ {
+    jugadores[i] = i
+  }
+  jugadores[4] = -1 //Mato al jugador de la pos 4
+  ronda := 3
+  fin_ronda(jugadores,ronda) //al terminar una ronda se revisa el estado de los jugadores
+  jugadores[7] = -1
+  fin_ronda(jugadores,ronda)
   //var input int
   //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
   //log.Printf("Response : %v", response)
@@ -178,17 +195,11 @@ func main(){
   if err != nil {
     log.Fatalf("failed to listen: %v", err)
   }
-
   s := grpc.NewServer()
-
   pb.RegisterCommServer(s, &CommServer{})
-
   log.Printf("Servidor escuchando en %v", lis.Addr())
-
   if err := s.Serve(lis); err != nil {
     log.Fatalf("failed to serve: %s", err)
   }
-
-
   return
 }
