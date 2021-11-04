@@ -1,7 +1,7 @@
 package main
 
 import (
-  "net"
+  //"net"
   "log"
   "time"
   "strconv"
@@ -11,7 +11,7 @@ import (
   "google.golang.org/grpc"
   "github.com/streadway/amqp"
   pb "example.com/go-comm-grpc/comm"
-  
+
 )
 
 var jugadoresActivos int32 = 0
@@ -55,7 +55,7 @@ func failOnError(err error, msg string) {
   }
 }
 
-func registrar_jugada_nameNode(id_jugador int, num_ronda int, jugada int, direccion_nameNode string){
+func registrar_jugada_nameNode(id_jugador int32, num_ronda int32, jugada int32, direccion_nameNode string) string{
   conn, err := grpc.Dial(direccion_nameNode, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("No se pudo lograr conexión: %v", err)
@@ -67,11 +67,12 @@ func registrar_jugada_nameNode(id_jugador int, num_ronda int, jugada int, direcc
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	response, err := c.RegistrarJugadaJugador(ctx, &pb.RequestRJJ{N_jugador: id_jugador, N_ronda: num_ronda, Jugada: jugada})
+	response, err := c.RegistrarJugadaJugador(ctx, &pb.RequestRJJ{NJugador: id_jugador, NRonda: num_ronda, Jugada: jugada})
 	if err != nil {
 		log.Fatalf("Error al hacer request a servidor: %v", err)
 	}
 	log.Printf("Response desde Data Node: %v", response.Body)
+  return response.Body
 }
 
 func informar_jugador_eliminado(id_jugador int){
@@ -107,13 +108,13 @@ func informar_jugador_eliminado(id_jugador int){
     })
   failOnError(err, "Failed to publish a message")
   log.Printf(" [*] Mensaje enviado al Pozo: %s", body)
-  return &body
 }
 
 func main(){
   //var input int
-  response := registrar_jugada_nameNode(6 ,1 ,4, "localhost")
-
+  response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
+  log.Printf("Response : %v", response)
+  /*
   lis, err := net.Listen("tcp", port)
   if err != nil {
     log.Fatalf("failed to listen: %v", err)
@@ -128,7 +129,7 @@ func main(){
   if err := s.Serve(lis); err != nil {
     log.Fatalf("failed to serve: %s", err)
   }
-
+  */
 
   return
 }
