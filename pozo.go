@@ -2,10 +2,9 @@ package main
 
 import (
 	"log"
-	"fmt"
 	"os"
+	"strconv"
 	"encoding/json"
-	"io/ioutil"
 	amqp "github.com/streadway/amqp"
 )
 
@@ -19,26 +18,39 @@ func failOnError(err error, msg string) {
 		log.Fatalf("%s: %s", msg, err)
 	}
 }
-
-func agregar_eliminado(archivo string,info string){
-	b := []byte(info+"\n")
-    err := ioutil.WriteFile(archivo, b, 0644)
-    if err != nil {
-        log.Fatal(err)
-    }
+func archivoExiste(ruta string) bool {
+	if _, err := os.Stat(ruta); os.IsNotExist(err) {
+		return false
+	}
+	return true
+}
+func agregar_eliminado(nombre_archivo string, jugador int, ronda int,monto_acumulado int){
+	if (archivoExiste(nombre_archivo)){
+		archivo, err := os.OpenFile(nombre_archivo, os.O_WRONLY|os.O_APPEND, 0644)
+		check(err)
+		defer archivo.Close()
+		linea:="Jugador_"+strconv.Itoa(jugador)+" Ronda_"+strconv.Itoa(ronda)+" "+strconv.Itoa(monto_acumulado)+"\n"
+		_,err = archivo.WriteString(linea)
+		check(err)
+	} else {
+		archivo, err := os.Create(nombre_archivo)
+		check(err)
+		defer archivo.Close()
+		defer archivo.Close()
+		linea:="Jugador_"+strconv.Itoa(jugador)+" Ronda_"+strconv.Itoa(ronda)+" "+strconv.Itoa(monto_acumulado)+"\n"
+		_,err = archivo.WriteString(linea)
+		check(err)
+	}
+	return
 }
 func main() {
-	//var monto_acumulado int
-	//monto := 0
-	f, err := os.Create("./registro.txt")
-    check(err)
-    defer f.Close()
-	n3, err := f.WriteString("Hola mundo\n")
-    check(err)
-    f.Sync()
-    n3, err = f.WriteString("Hace sueño\n")
-    check(err)
-	_ = n3
+	monto_acumulado := 0
+	nombre_archivo:="registro_eliminados.txt"
+	if (archivoExiste(nombre_archivo)){
+		err := os.Remove(nombre_archivo)
+		check(err)
+	}
+
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
@@ -78,7 +90,8 @@ func main() {
 			if err := json.Unmarshal(d.Body, &dat); err != nil {
 		        panic(err)
 		    }
-		    fmt.Println(dat)
+		    monto_acumulado+=100000000
+    		agregar_eliminado(nombre_archivo,dat["Jugador"],dat["Ronda"],monto_acumulado)
 		}
 	}()
 

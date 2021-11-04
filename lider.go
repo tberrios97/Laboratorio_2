@@ -72,6 +72,20 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
   comienzoEtapa = false
   jugadoresListos ++
 
+<<<<<<< HEAD
+  for {
+    if jugadoresListosEtapa == jugadoresActivos && juegoActivo && !bloqueo{
+      bloqueo = true
+      log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
+      fmt.Scan(&input)
+      if input == 1{
+        log.Printf("[*] Si")
+      }else {
+        log.Printf("[*] No")
+      }
+      comienzoEtapa = true
+    }
+=======
   if jugadoresListos == jugadoresActivos && juegoActivo{
     log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
     fmt.Scan(&input)
@@ -79,11 +93,12 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
       log.Printf("[*] Si")
     }else {
       log.Printf("[*] No")
-    }    
+    }
     comienzoEtapa = true
     jugadoresListos = 0
     resetContadorJugadores()
   }
+>>>>>>> 0aa4437ea9999b5e3ced953138a8f71521a5f650
 
   for {
     if comienzoEtapa {
@@ -109,7 +124,7 @@ func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.
       log.Printf("[*] Si")
     }else {
       log.Printf("[*] No")
-    }    
+    }
     comienzoRonda = true
     jugadoresListos = 0
   }
@@ -179,9 +194,9 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
         //Caso en que debe seguir jugando pero no ha ganado la etapa aún
         return &pb.ResponsePrimeraEtapa{Estado: true, Ganador: false}, nil
       }
-      
+
     }
-  } 
+  }
 }
 
 func failOnError(err error, msg string) {
@@ -216,7 +231,7 @@ type jugador_eliminado struct {
 }
 
 func informar_jugador_eliminado(id_jugador int, ronda int){
-  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/") 
+  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
   failOnError(err, "Failed to connect to RabbitMQ")
   defer conn.Close()
   ch, err := conn.Channel()
