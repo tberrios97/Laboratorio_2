@@ -88,6 +88,13 @@ func menu_prints(esEtapa bool, etapa int, cliente pb.CommClient, ctx context.Con
       }
     }
   }
+
+  fmt.Println("\n")
+  printSeparador()
+  printSeparador()
+  printSeparador()
+  fmt.Println("\n")
+  
   return
 }
 
@@ -114,7 +121,9 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   for ronda = 1; ronda <= 4; ronda ++{
 
     //Comprobar que el jugador no haya ganada ya la etapa
+    fmt.Println("")
     printSeparador()
+    fmt.Println("")
     fmt.Print("[*] Ronda ", ronda, ".\n[*] Realice su jugada: ")
     if !ganador {
       //Lectura de la jugada en cada ronda, hasta un máximo de 4
