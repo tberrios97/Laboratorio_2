@@ -52,7 +52,7 @@ func menu_prints(esEtapa bool, etapa int, cliente pb.CommClient, ctx context.Con
       fmt.Print("[*] Respuesta: ")
       fmt.Scan(&opcion)
       if opcion == 1 {
-        fmt.Printf("[*] Solicitando el monto total acumulado...")
+        fmt.Println("[*] Solicitando el monto total acumulado...")
         //Solicitar monto acumulado
 
         respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
@@ -61,7 +61,7 @@ func menu_prints(esEtapa bool, etapa int, cliente pb.CommClient, ctx context.Con
         }
 
         var monto int32 = respuesta.GetMonto()
-        fmt.Printf("[*] Monto acumulado", monto, "KRW")
+        fmt.Println("[*] Monto acumulado", monto, "KRW")
       } else {
         break
       }

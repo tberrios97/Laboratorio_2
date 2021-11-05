@@ -218,7 +218,7 @@ func informar_jugador_eliminado(id_jugador int, ronda int){
       Body:        dataBytes,
     })
   failOnError(err, "Failed to publish a message")
-  log.Printf("[*] Jugador eliminado informado al pozo")
+  //log.Printf("[*] Jugador eliminado informado al pozo")
 }
 
 func SolicitarMonto() int32{
@@ -419,7 +419,7 @@ func (s *CommServer) TerminoRonda(ctx context.Context, in *pb.RequestRonda) (*pb
     jugadoresListos = 0
 
     //Mostrar información terminado el juego o una etapa
-    if in.GetTerminoJuego(){
+    if in.GetTerminoJuego() || jugadoresActivos <= 1 {
       //Reset de variables para iniciar otra partida
       mostrarGanadores()
       resetPartida()
