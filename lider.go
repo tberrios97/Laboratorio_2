@@ -69,7 +69,7 @@ func resetPozo(){
   cliente := pb.NewCommClient(coneccion)
   ctx, cancel := context.WithTimeout(context.Background(), time.Second)
   defer cancel()
-  _, err = cliente.ReiniciarPartida(ctx, &pb.RequestTest{Body: "hola jorge :D"}) 
+  _, err = cliente.ReiniciarPartida(ctx, &pb.RequestTest{Body: "hola jorge :D"})
   if err != nil {
       log.Fatalf("Error en la conexión con el servidor: %v", err)
     }
@@ -221,8 +221,9 @@ func SolicitarMonto() int32{
 }
 
 //adicional es para agregar el numero del jugador eliminado | el numero de ganadores | numero de etapa
-func menu_prints(etapa int32, ronda int32, esEtapa bool)(){ 
+func menu_prints(etapa int32, ronda int32, esEtapa bool)(){
   var opcion int
+  var jugadas [4]int
   if esEtapa {
     for {
       log.Printf("[*] ¿Qué acción desea realizar?")
@@ -255,6 +256,15 @@ func menu_prints(etapa int32, ronda int32, esEtapa bool)(){
         fmt.Scan(&opcion)
         //Pedir jugada
         log.Printf("[*] Solicitando jugadas del jugador "+strconv.Itoa(opcion)+"...")
+        jugadas = buscar_jugada_nameNode(int32(opcion), etapa, "localhost:9100")
+        posicion := 0
+        for {
+          if (jugadas[posicion] == 0){
+            break
+          }
+          log.Printf("[*] Las jugada número %d realizada por el Jugador %d fue: %v", posicion+1, opcion, jugadas[posicion])
+          posicion++
+        }
       } else if opcion == 2 {
         log.Printf("[*] Solicitando el monto total acumulado...")
         //Solicitar monto acumulado
@@ -267,14 +277,6 @@ func menu_prints(etapa int32, ronda int32, esEtapa bool)(){
       }
     }
   }
-  
-  /*
-  if opcion == 0{ //Inicio
-    log.Printf("[*] Bienvenidos al juego del Calamar\n")
-    log.Printf("[*] Esperando jugadores...\n")
-
-  }
-  */
   return
 }
 
@@ -441,6 +443,9 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
   ronda := in.GetRonda()
   jugador := in.GetJugador()
 
+  response := registrar_jugada_nameNode(jugador ,1 ,jugada, "localhost:9100")
+  log.Printf("Response : %v", response)
+
   //Suma de la jugada actual del jugador
   contadorJugadaJugador[jugador - 1] = contadorJugadaJugador[jugador - 1] + jugada
 
@@ -503,6 +508,9 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
 
   jugada := in.GetJugada()
   jugador := in.GetJugador()
+
+  response := registrar_jugada_nameNode(jugador ,2 ,jugada ,"localhost:9100")
+  log.Printf("Response : %v", response)
 
   //Contar jugada segun el equipo del jugador
   if contadorJugadaJugador[jugador - 1] == 1 {
@@ -573,6 +581,9 @@ func (s *CommServer) JugadaTerceraEtapa(ctx context.Context, in *pb.RequestTerce
 
   jugada := in.GetJugada()
   jugador := in.GetJugador()
+
+  response := registrar_jugada_nameNode(jugador ,3 ,jugada, "localhost:9100")
+  log.Printf("Response : %v", response)
 
   //Obtener oponente y registrar jugada
   var oponente int32 = contadorJugadaJugador[jugador - 1]
@@ -673,10 +684,6 @@ func registrar_jugada_nameNode(id_jugador int32, num_ronda int32, jugada int32, 
 func main(){
   //Seteo de semilla aleatoria para que funcione mejor el random
   rand.Seed(time.Now().UnixNano())
-
-  //var input int
-  //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
-  //log.Printf("Response : %v", response)
 
   lis, err := net.Listen("tcp", port)
   if err != nil {
