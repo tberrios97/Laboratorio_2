@@ -58,13 +58,7 @@ func agregar_eliminado(nombre_archivo string, jugador int, ronda int,monto_acumu
 	}
 	return
 }
-func main() {
-	nombre_archivo:="registro_eliminados.txt"
-	if (archivoExiste(nombre_archivo)){
-		err := os.Remove(nombre_archivo)
-		check(err)
-	}
-	//comunicación gRPC
+func comunicacion_grpc(){
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("fallo el escuchar: %v", err)
@@ -75,7 +69,15 @@ func main() {
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %s", err)
 	}
-
+}
+func main() {
+	nombre_archivo:="registro_eliminados.txt"
+	if (archivoExiste(nombre_archivo)){
+		err := os.Remove(nombre_archivo)
+		check(err)
+	}
+	go comunicacion_grpc()
+	
 	//comunicación RabbitMQ
 	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	failOnError(err, "Failed to connect to RabbitMQ")
