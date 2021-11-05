@@ -18,7 +18,7 @@ import (
 const (
   port = ":9000"
   capacidadJugadores = 2
-  address = "localhost:3000"  //REVISAR
+  address = "dist59:3000"  //REVISAR
 )
 
 //
@@ -79,7 +79,7 @@ func resetPozo(){
 }
 
 func resetNameNode(){
-  coneccion, err := grpc.Dial("localhost:9100", grpc.WithInsecure(), grpc.WithBlock())
+  coneccion, err := grpc.Dial("dist60:9100", grpc.WithInsecure(), grpc.WithBlock())
   if err != nil {
     log.Fatalf("did not connect: %v", err)
   }
@@ -275,11 +275,12 @@ func menu_prints(etapa int32, ronda int32, esEtapa bool)(){
         fmt.Scan(&opcion)
         //Pedir jugada
         log.Printf("[*] Solicitando jugadas del jugador "+strconv.Itoa(opcion)+"...")
-        jugadas = buscar_jugada_nameNode(int32(opcion), etapa, "localhost:9100")
+        jugadas = buscar_jugada_nameNode(int32(opcion), etapa, "dist60:9100")
         posicion := 0
         for {
           if (jugadas[posicion] == -1) {
             log.Printf("[*] El jugador seleccionado no realizó jugadas en esta etapa")
+            break
           }
           if (posicion == 4) {
             break
@@ -475,7 +476,7 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
   ronda := in.GetRonda()
   jugador := in.GetJugador()
 
-  registrar_jugada_nameNode(jugador ,1 ,jugada, "localhost:9100")
+  registrar_jugada_nameNode(jugador ,1 ,jugada, "dist60:9100")
 
   //Suma de la jugada actual del jugador
   contadorJugadaJugador[jugador - 1] = contadorJugadaJugador[jugador - 1] + jugada
@@ -540,7 +541,7 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
   jugada := in.GetJugada()
   jugador := in.GetJugador()
 
-  registrar_jugada_nameNode(jugador ,2 ,jugada ,"localhost:9100")
+  registrar_jugada_nameNode(jugador ,2 ,jugada ,"dist60:9100")
 
   //Contar jugada segun el equipo del jugador
   if contadorJugadaJugador[jugador - 1] == 1 {
@@ -612,7 +613,7 @@ func (s *CommServer) JugadaTerceraEtapa(ctx context.Context, in *pb.RequestTerce
   jugada := in.GetJugada()
   jugador := in.GetJugador()
 
-  registrar_jugada_nameNode(jugador ,3 ,jugada, "localhost:9100")
+  registrar_jugada_nameNode(jugador ,3 ,jugada, "dist60:9100")
 
   //Obtener oponente y registrar jugada
   var oponente int32 = contadorJugadaJugador[jugador - 1]

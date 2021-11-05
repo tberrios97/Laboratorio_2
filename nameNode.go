@@ -24,7 +24,7 @@ const (
   port = ":9100"
 )
 
-var direcciones_dataNode = []string{"localhost", "localhost", "localhost"}
+var direcciones_dataNode = []string{"dist57", "dist58", "dist59"}
 
 type CommServer struct {
 	pb.UnimplementedCommServer
@@ -123,9 +123,9 @@ func (s *CommServer) ReiniciarPartida(ctx context.Context, in *pb.RequestTest) (
 		err := os.Remove(nombre_archivo)
 		check(err)
 	}
-	resetDataNode("localhost:9300")
-	//resetDataNode("localhost:9300")
-	//resetDataNode("localhost:9300")
+	resetDataNode("dist57:9300")
+	resetDataNode("dist58:9300")
+	resetDataNode("dist59:9300")
 	return &pb.ResponseTest{Body: "hola jorge :D"}, nil
 }
 
