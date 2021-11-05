@@ -4,7 +4,7 @@ import (
   "net"
   "encoding/json"
   "log"
-  "fmt"
+  //"fmt"
   "time"
   "context"
   "math/rand"
@@ -30,13 +30,55 @@ var jugadasRecolectadas bool = false
 
 //
 var contadorJugadaJugador [capacidadJugadores]int32
-var conteoEquipo1 int32
-var conteoEquipo2 int32
-var equipoGanador int32
-var jugadaLider int32
+var conteoEquipo1 int32 = 0
+var conteoEquipo2 int32 = 0
+var equipoGanador int32 = 0
+var jugadaLider int32 = 0
 
 type CommServer struct {
   pb.UnimplementedCommServer
+}
+
+func mostrarGanadores(){
+  log.Printf("[*] Ganador(es) del Juego del Calamar:")
+  for i := 0; i < capacidadJugadores; i++ {
+    if contadorJugadaJugador[i] != -1 {
+      log.Printf("\t[*] Jugador %d.", i + 1)
+    }
+  }
+}
+
+func mostrarJugadoresVivos(){
+  log.Printf("[*] Lista de Jugadores vivos terminada la etapa:")
+  for i := 0; i < capacidadJugadores; i++ {
+    if contadorJugadaJugador[i] != -1 {
+      log.Printf("\t[*] Jugador %d.", i + 1)
+    }
+  }
+}
+
+func resetPartida() {
+  jugadoresActivos = 0
+  jugadoresListos = 0
+  juegoActivo = false
+  comienzoEtapa = false
+  comienzoRonda = false
+  jugadasRecolectadas = false
+  conteoEquipo1 = 0
+  conteoEquipo2 = 0
+  equipoGanador = 0
+  jugadaLider = 0
+  for i := 0; i < capacidadJugadores; i++ {
+    contadorJugadaJugador[i] = 0
+  }
+}
+
+func abs(number int32) int32 {
+  if number < 0 {
+    return -number
+  } else {
+    return number
+  }
 }
 
 func random(min, max int) int32 {
@@ -68,6 +110,24 @@ func elegirEquipos() {
   }
 }
 
+func elegirParejas() {
+  a := -1
+  b := -1
+  for i := 0; i < capacidadJugadores; i++ {
+    if contadorJugadaJugador[i] != -1 {
+      if a == -1 {
+        a = i
+      } else if b == -1 {
+        b = i
+        contadorJugadaJugador[b] = int32(a + 1)
+        contadorJugadaJugador[a] = int32(b + 1)
+        a = -1
+        b = -1
+      }
+    }
+  }
+}
+
 func resetContadorJugadores() (){
   for i := 0; i < capacidadJugadores; i++ {
     if contadorJugadaJugador[i] != -1 {
@@ -85,29 +145,30 @@ func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirs
   } else {
     log.Printf("[*] Espacio disponible. Petición aceptada")
     jugadoresActivos ++
+    log.Printf("[*] Jugadores activos: %d/%d", jugadoresActivos, capacidadJugadores)
     if jugadoresActivos == capacidadJugadores {
+      log.Printf("")
+      log.Printf("[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]")
+      log.Printf("")
+      log.Printf("[*] Comienzo del Juego del Calamar.")
       juegoActivo = true
     }
-    log.Printf("[*] Jugadores activos: %d/%d", jugadoresActivos, capacidadJugadores)
+    
     return &pb.ResponseUnirse{NumeroJugador: jugadoresActivos}, nil
   }
 }
 
 func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.ResponseEtapa, error){
-  var input int
   var etapa int32 = in.GetEtapa()
   var numeroJugador = in.GetNumeroJugador()
   comienzoEtapa = false
   jugadoresListos ++
 
   if jugadoresListos == jugadoresActivos && juegoActivo{
-    log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
-    fmt.Scan(&input)
-    if input == 1{
-      log.Printf("[*] Si")
-    }else {
-      log.Printf("[*] No")
-    }
+    
+    //Consola del Líder al inicio de cada Etapa
+
+    //...
     
     //reset de contadores de los jugadores activos a 0
     resetContadorJugadores()
@@ -125,6 +186,16 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
       elegirEquipos()
       conteoEquipo1 = 0
       conteoEquipo2 = 0
+    } else if etapa == 3 { //Etapa 3. Verificar paridad de jugadores y asignar contrincante.
+      //Verificar si hay jugadores impares
+      if jugadoresActivos % 2 == 1 {
+        //Eliminar jugador al azar
+        jugadorRandom := elegirJugadorRandomActivo()
+        contadorJugadaJugador[jugadorRandom - 1] = -1
+        jugadoresActivos --
+      }
+      //Elegir parejas
+      elegirParejas()
     }
 
     //Setear variables para ejecutar la siguiente etapa
@@ -144,7 +215,17 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
           return &pb.ResponseEtapa{Body: 1, TerminoJuego: false}, nil
         }
       } else if etapa == 2 { 
-        //Etapa 2. Verificar paridad de jugadores y asignar equipos.
+        //Etapa 2. Devolver equipo del jugador
+        var terminoJuego bool
+        var body int32 = contadorJugadaJugador[numeroJugador - 1]
+        if jugadoresActivos == 1 {
+          terminoJuego = true
+        } else {
+          terminoJuego = false
+        }
+        return &pb.ResponseEtapa{Body: body, TerminoJuego: terminoJuego}, nil
+      } else {
+        //Etapa 3. Devolver la pareja del jugador
         var terminoJuego bool
         var body int32 = contadorJugadaJugador[numeroJugador - 1]
         if jugadoresActivos == 1 {
@@ -159,35 +240,51 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
 }
 
 func (s *CommServer) TerminoRonda(ctx context.Context, in *pb.RequestRonda) (*pb.ReponseRonda, error){
-  var input int
   comienzoRonda = false
   jugadoresListos ++
 
   if jugadoresListos == jugadoresActivos && juegoActivo{
-    log.Printf("[*] ¿Listos para comenzar?\n[*] (1) Si\t(2)No")
-    fmt.Scan(&input)
-    if input == 1{
-      log.Printf("[*] Si")
-    }else {
-      log.Printf("[*] No")
-    }
+    //Consola del Líder despues de cada ronda
+
+    //...
+
+    //Dar comienzo a la siguiente ronda
     comienzoRonda = true
     jugadoresListos = 0
+
+    //Mostrar información terminado el juego o una etapa
+    if in.GetTerminoJuego(){
+      //Reset de variables para iniciar otra partida
+      mostrarGanadores()
+      resetPartida()
+      log.Printf("[*] Partida Finalizada.")
+      log.Printf("")
+      log.Printf("[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]")
+      log.Printf("")
+      return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
+    } else {
+      if in.GetRondaFinal() {
+        mostrarJugadoresVivos()
+        resetContadorJugadores()
+      }
+    }
+
   }
 
   for {
     if comienzoRonda {
 
-      //Si es la última ronda, hacer reset
-      if in.GetRondaFinal() {
-        resetContadorJugadores()
-      }
-
-      if jugadoresActivos == 1{
+      //Si se termino el juego
+      if in.GetTerminoJuego(){
         return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
       } else {
-        return &pb.ReponseRonda{Body: 1, TerminoJuego: false}, nil
+        if jugadoresActivos == 1{
+          return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
+        } else {
+          return &pb.ReponseRonda{Body: 1, TerminoJuego: false}, nil
+        }
       }
+
     }
   }
 }
@@ -208,19 +305,20 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
     jugadoresListos = 0
     jugadaLider = random(6, 10)
     jugadasRecolectadas = true
-    log.Printf("Jugada del lider: %d", jugadaLider)
+    log.Printf("[*] Jugada del lider: %d", jugadaLider)
   }
 
   for {
     //Cuando todos los jugadores hayan realizado sus jugadas
     if jugadasRecolectadas {
-      log.Printf("Ronda %d Jugada del jugador %d: %d", ronda, jugador, jugada)
+      //log.Printf("Ronda %d Jugada del jugador %d: %d", ronda, jugador, jugada)
 
       //Si un jugador ingresa un número mayor o igual al del lider.
       //Se debe informar que un jugador ha sido eliminado.
       if jugada >= jugadaLider {
         jugadoresActivos --
         contadorJugadaJugador[jugador - 1] = -1
+        log.Printf("[*] Jugador %d eliminado.", jugador)
         return &pb.ResponsePrimeraEtapa{Estado: false, Ganador: false}, nil
       }
 
@@ -231,7 +329,7 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
 
       //Ronda final
       if ronda == 4 {
-        log.Printf("Conteo del jugador %d: %d", jugador, contadorJugadaJugador[jugador - 1])
+        //log.Printf("Conteo del jugador %d: %d", jugador, contadorJugadaJugador[jugador - 1])
         //Si el jugador llego a la meta.
         //Caso contrario, se debe informar que se ha eliminado.
         if contadorJugadaJugador[jugador - 1] >= 21 {
@@ -239,6 +337,7 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
         } else {
           jugadoresActivos --
           contadorJugadaJugador[jugador - 1] = -1
+          log.Printf("[*] Jugador %d eliminado.", jugador)
           return &pb.ResponsePrimeraEtapa{Estado: false, Ganador: false}, nil
         }
       } else {
@@ -294,7 +393,7 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
     }
 
     jugadasRecolectadas = true
-    log.Printf("Jugada del lider: %d", jugadaLider)
+    log.Printf("[*] Jugada del lider: %d", jugadaLider)
   }
 
   for {
@@ -308,8 +407,55 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
         if contadorJugadaJugador[jugador - 1] == equipoGanador {
           return &pb.ResponseSegundaEtapa{Estado: true}, nil
         } else {
+          contadorJugadaJugador[jugador - 1] = -1
+          log.Printf("[*] Jugador %d eliminado.", jugador)
           return &pb.ResponseSegundaEtapa{Estado: false}, nil
         }
+      }
+    }
+  }
+
+}
+
+func (s *CommServer) JugadaTerceraEtapa(ctx context.Context, in *pb.RequestTerceraEtapa) (*pb.ResponseTerceraEtapa, error) {
+  jugadasRecolectadas = false
+  
+  jugada := in.GetJugada()
+  jugador := in.GetJugador()
+
+  //Obtener oponente y registrar jugada
+  var oponente int32 = contadorJugadaJugador[jugador - 1]
+  contadorJugadaJugador[jugador - 1] = jugada
+
+  //Condición cuando el último jugador haya realizado su jugada
+  jugadoresListos ++
+  if jugadoresListos == jugadoresActivos && juegoActivo{
+    jugadoresListos = 0
+    //Realizar jugada del Lider
+    jugadaLider = random(1, 10)
+    jugadasRecolectadas = true
+    log.Printf("[*] Jugada del lider: %d", jugadaLider)
+  }
+
+  for {
+    if jugadasRecolectadas {
+      //Calcular diferencia en absoluto del oponente y jugador
+      var jugadaOponente int32 = contadorJugadaJugador[oponente - 1]
+      var absolutoOponente int32 = abs(jugadaOponente - jugadaLider)
+      var absolutoJugador int32 = abs(jugada - jugadaLider)
+      //Comparar quien tiene un valor absoluto menor
+      if absolutoJugador == absolutoOponente {
+        //Caso en que ambos jugadores ganar
+        return &pb.ResponseTerceraEtapa{Estado: true}, nil
+      } else if absolutoJugador < absolutoOponente {
+        //Caso en que el jugador ganar
+        return &pb.ResponseTerceraEtapa{Estado: true}, nil
+      } else {
+        //Caso en que el oponente gana
+        jugadoresActivos --
+        contadorJugadaJugador[jugador - 1] = -1
+        log.Printf("[*] Jugador %d eliminado.", jugador)
+        return &pb.ResponseTerceraEtapa{Estado: false}, nil
       }
     }
   }
