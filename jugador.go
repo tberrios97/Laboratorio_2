@@ -301,7 +301,7 @@ func main(){
   var monto, cantidadJugadores int32
 
   //Definicion de la conexión con el servidor
-  conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+  conn, err := grpc.Dial(address, grpc.WithInsecure())
   if err != nil {
     log.Fatalf("did not connect: %v", err)
   }

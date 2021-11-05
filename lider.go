@@ -224,7 +224,7 @@ func informar_jugador_eliminado(id_jugador int, ronda int){
 }
 
 func SolicitarMonto() int32{
-  coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+  coneccion, err := grpc.Dial(address, grpc.WithInsecure())
   if err != nil {
     log.Fatalf("did not connect: %v", err)
   }

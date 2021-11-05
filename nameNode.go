@@ -102,7 +102,7 @@ func resetNameNode(){
 }
 
 func resetDataNode(address string){
-  coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+  coneccion, err := grpc.Dial(address, grpc.WithInsecure())
   if err != nil {
     log.Fatalf("did not connect: %v", err)
   }
@@ -137,7 +137,7 @@ func (s *CommServer) BuscarJugada(in *pb.RequestBJ, stream pb.Comm_BuscarJugadaS
 
 	direccion = buscarEnArchivo(int(in.GetNJugador()), int(in.GetNRonda()))
 
-	conn, err := grpc.Dial(direccion+":9300", grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(direccion+":9300", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("no se conecto: %v", err)
 	}
@@ -184,7 +184,7 @@ func (s *CommServer) RegistrarJugadaJugador(ctx context.Context, in *pb.RequestR
     archivoJugada(int(in.GetNJugador()), int(in.GetNRonda()), direccion)
   }
 
-  conn, err := grpc.Dial(direccion+":9300", grpc.WithInsecure(), grpc.WithBlock())
+  conn, err := grpc.Dial(direccion+":9300", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("no se conecto: %v", err)
 	}
