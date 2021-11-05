@@ -68,6 +68,7 @@ func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirs
 
 func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.ResponseEtapa, error){
   var input int
+  var etapa int = GetEtapa()
   bloqueo = false
   comienzoEtapa = false
   jugadoresListos ++
@@ -87,10 +88,24 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
 
   for {
     if comienzoEtapa {
-      if jugadoresActivos == 1{
-        return &pb.ResponseEtapa{Body: 1, TerminoJuego: true}, nil
-      } else {
-        return &pb.ResponseEtapa{Body: 1, TerminoJuego: false}, nil
+
+      //Manejo de Etapas
+      //Etapa 1. No hay manipulación extra
+      if etapa == 1 {
+        if jugadoresActivos == 1{
+          return &pb.ResponseEtapa{Body: 1, TerminoJuego: true}, nil
+        } else {
+          return &pb.ResponseEtapa{Body: 1, TerminoJuego: false}, nil
+        }
+      } 
+      //Etapa 2. Verificar paridad de jugadores y asignar equipos.
+      else if etapa == 2 {
+        var terminoJuego bool
+        if jugadoresActivos == 1 {
+          terminoJuego = true
+        } else {
+          terminoJuego = false
+        }
       }
     }
   }
@@ -116,6 +131,12 @@ func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.
 
   for {
     if comienzoRonda {
+
+      //Si es la última ronda, hacer reset
+      if in.GetRondaFinal() {
+        resetContadorJugadores()
+      }
+
       if jugadoresActivos == 1{
         return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
       } else {

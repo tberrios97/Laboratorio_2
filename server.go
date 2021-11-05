@@ -32,7 +32,7 @@ func main() {
 
 	pb.RegisterCommServer(s, &CommServer{})
 
-	log.Printf("server listening at %v", lis.Addr())
+	log.Printf("Servidor escuchando en %v", lis.Addr())
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %s", err)

@@ -5,6 +5,7 @@ import (
   "log"
   "time"
   "context"
+  "strconv"
   //"strings"
   "math/rand"
   "google.golang.org/grpc"
@@ -14,6 +15,12 @@ import (
 const (
   address = "localhost:9000"
 )
+
+func printSeparador(){
+  fmt.Println("[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]")
+  fmt.Println("[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]")
+  fmt.Println("[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]")
+}
 
 func random(min, max int) int {
   //49152-65535
@@ -38,14 +45,22 @@ func intermedio(etapa string){
   }
 }
 
-func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32) bool{
+func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32) (bool, bool){
   var jugada int32
   var estado bool
   var ganador bool
   var terminoJuego bool
   var ronda int32 = 1
-  fmt.Println("[*] Comenzando primera etapa.")
+  fmt.Println("[*] Comenzando primera etapa. Próximo juego:")
   fmt.Println("[*] || Juego Luz Roja, Luz Verde ||")
+
+  //Esperar a la respuesta del servidor para iniciar la etapa
+  fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
+  _, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 1})
+  if err != nil {
+    log.Fatalf("Error en la conexión con el servidor: %v", err)
+  }
+
   fmt.Println("[*] Para jugar debes elegir un número entre 1 y 10.")
   for ronda = 1; ronda <= 4; ronda ++{
     //Lectura de la jugada en cada ronda, hasta un máximo de 4
@@ -62,7 +77,11 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
     ganador = respuesta.GetGanador()
 
     //Espera del inicio de la siguiente ronda
-    respuestaRonda, error := cliente.InicioRonda(ctx, &pb.RequestRonda{Body: 1})
+    if ronda == 4 {
+      respuestaRonda, error := cliente.InicioRonda(ctx, &pb.RequestRonda{RondaFinal: true})
+    } else {
+      respuestaRonda, error := cliente.InicioRonda(ctx, &pb.RequestRonda{RondaFinal: false})
+    }
     if error != nil {
       log.Fatalf("Error en la conexión con el servidor: %v", error)
     }
@@ -77,28 +96,37 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
     if ganador {
       break
     }
-    //Comprobar si el juego ya se ha acabado
+    //Comprobar si el juego ya se ha acabado por solo quedar un único jugador
     if terminoJuego {
-      fmt.Println("[*] Juego Terminado, has ganado")
+      ganador = true
+      //fmt.Println("[*] Juego Terminado, has ganado")
       break
     }
-    fmt.Println("[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]\n[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]")
+    printSeparador()
   }
   
-  return ganador
+  return ganador, terminoJuego
 }
 
-func juego_etapa_2() bool{
+func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32) bool{
   var equipo int
   var jugada int
   var respuesta int
   jugando := true
-  fmt.Println("[*] Comenzado segunda etapa.")
-  fmt.Println("[*] Juego Tirar la Cuerda.")
+  fmt.Println("[*] Comenzado segunda etapa. Próximo juego")
+  fmt.Println("[*] || Juego Tirar la Cuerda ||")
 
   //Realizar petición para entrar en la etapa
   //Mostrar en que equipo se encuentra o si fue eliminado al azar
-  equipo = 1
+
+  //Esperando respuesta del servidor para iniciar la etapa
+  fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
+  respuesta, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 2})
+  if err != nil {
+    log.Fatalf("Error en la conexión con el servidor: %v", err)
+  }
+
+  equipo = respuesta.GetBody()
   if equipo == 3{
     jugando = false
     fmt.Println("[*] Lo sentimos, has sido eliminado al azar.\n[*] Gracias por jugar.") 
@@ -186,7 +214,7 @@ func main(){
       log.Fatalf("Error when calling SayHello: %v", err)
     }
     fmt.Println("[*] Ingreso realizado correctamente.")
-    fmt.Println("[*] Número de jugar: ", respuesta.NumeroJugador)
+    fmt.Println("[*] Número de jugador:", respuesta.NumeroJugador)
     //Registrar número del jugador que se ha elegido
     numeroJugador = respuesta.GetNumeroJugador()
 
@@ -202,19 +230,21 @@ func main(){
     *
     */
 
-    //Esperar a la respuesta del servidor para iniciar la etapa
-    fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
-    _, err = cliente.InicioEtapa(ctx, &pb.RequestEtapa{Body: 1})
-    if err != nil {
-      log.Fatalf("Error en la conexión con el servidor: %v", err)
-    }
+    printSeparador()
 
     //Comienzo de la primera etapa
-    jugando = juegoEtapa1(cliente, ctx, numeroJugador)
+    jugando, terminoJuego = juegoEtapa1(cliente, ctx, numeroJugador)
 
     //Verificar si el jugador sigue jugando
     if !jugando{
-      fmt.Println("[*] Finalizando programa de SquidGame. |")
+      fmt.Println("[*] Finalizando programa de SquidGame.")
+      return
+    }
+
+    //Verificar si ya solo queda un único jugador
+    if terminoJuego {
+      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", 0, "KRW")
+      fmt.Println("[*] Finalizando programa de SquidGame.")
       return
     }
 
@@ -224,23 +254,10 @@ func main(){
     *
     */
 
-    //Esperando respuesta del servidor para iniciar la etapa
-    fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
-    respuestaEtapa, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Body: 1})
-    if err != nil {
-      log.Fatalf("Error en la conexión con el servidor: %v", err)
-    }
-
-    //Verificar si ya solo queda un único jugador
-    terminoJuego = respuestaEtapa.GetTerminoJuego()
-    if terminoJuego {
-      fmt.Println("[*] Felicitaciones jugador %d, has gando el Juego del Calamar.\n[*] Has ganado %d KRW", numeroJugador, 0)
-      fmt.Println("[*] Finalizando programa de SquidGame.")
-      return
-    }
+    printSeparador()
 
     //Comienzo de la segunda etapa
-    jugando = juego_etapa_2()
+    jugando = juegoEtapa2(cliente, ctx, numeroJugador)
 
     //Verificar si el jugador sigue jugando
     if !jugando{
@@ -250,14 +267,14 @@ func main(){
 
     //Esperando respuesta del servidor para iniciar la etapa
     fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
-    respuestaEtapa, err = cliente.InicioEtapa(ctx, &pb.RequestEtapa{Body: 1})
+    respuestaEtapa, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 3})
     if err != nil {
       log.Fatalf("Error en la conexión con el servidor: %v", err)
     }
     //Verificar si ya solo queda un único jugador
     terminoJuego = respuestaEtapa.GetTerminoJuego()
     if terminoJuego {
-      fmt.Println("[*] Felicitaciones jugador %d, has gando el Juego del Calamar.\n[*] Has ganado %d KRW", numeroJugador, 0)
+      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", 0, "KRW")
       fmt.Println("[*] Finalizando programa de SquidGame.")
       return
     }

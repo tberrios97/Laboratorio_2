@@ -17,6 +17,8 @@ service Comm {
   rpc RegistrarJugadaDN(RequestRJDN) returns (ResponseRJDN) {}
   rpc BuscarJugada(RequestBJ) returns (stream ResponseBJ) {}
   rpc ObtenerJugada(RequestOJ) returns (stream ResponseOJ) {}
+
+  rpc SolicitarMonto(RequestMonto) returns (ResponseMonto) {}
 }
 
 
@@ -36,11 +38,11 @@ message RequestUnirse {
 }
 
 message RequestEtapa {
-  int32 body = 1;
+  int32 etapa = 1;
 }
 
 message RequestRonda {
-  int32 body = 1;
+  bool rondaFinal = 1;
 }
 
 message RequestPrimeraEtapa {
@@ -58,7 +60,6 @@ message RequestTerceraEtapa {
   int32 jugada = 1;
   int32 jugador = 2;
 }
-
 
 message ResponseUnirse {
   int32 numeroJugador = 1;
@@ -88,23 +89,6 @@ message ResponseTerceraEtapa {
 }
 
 
-message RequestOJ {
-  int32 n_jugador = 1;
-  int32 n_ronda = 2;
-}
-
-message ResponseOJ {
-int32 jugadas = 1;
-}
-
-message RequestBJ {
-  int32 n_jugador = 1;
-  int32 n_ronda = 2;
-}
-
-message ResponseBJ {
-int32 jugadas = 1;
-}
 
 message RequestRJDN {
   int32 n_jugador = 1;
@@ -124,4 +108,31 @@ message RequestRJJ {
 
 message ResponseRJJ {
   string body = 1;
+}
+
+message RequestOJ {
+  int32 n_jugador = 1;
+  int32 n_ronda = 2;
+}
+
+message ResponseOJ {
+int32 jugadas = 1;
+}
+
+message RequestBJ {
+  int32 n_jugador = 1;
+  int32 n_ronda = 2;
+}
+
+message ResponseBJ {
+int32 jugadas = 1;
+}
+
+
+
+message RequestMonto{
+  int32 monto_acumulado=1;
+}
+message ResponseMonto{
+  int32 monto_acumulado=1;
 }

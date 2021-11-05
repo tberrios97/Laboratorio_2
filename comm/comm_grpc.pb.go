@@ -29,6 +29,7 @@ type CommClient interface {
 	RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opts ...grpc.CallOption) (*ResponseRJDN, error)
 	BuscarJugada(ctx context.Context, in *RequestBJ, opts ...grpc.CallOption) (Comm_BuscarJugadaClient, error)
 	ObtenerJugada(ctx context.Context, in *RequestOJ, opts ...grpc.CallOption) (Comm_ObtenerJugadaClient, error)
+	SolicitarMonto(ctx context.Context, in *RequestMonto, opts ...grpc.CallOption) (*ResponseMonto, error)
 }
 
 type commClient struct {
@@ -184,6 +185,15 @@ func (x *commObtenerJugadaClient) Recv() (*ResponseOJ, error) {
 	return m, nil
 }
 
+func (c *commClient) SolicitarMonto(ctx context.Context, in *RequestMonto, opts ...grpc.CallOption) (*ResponseMonto, error) {
+	out := new(ResponseMonto)
+	err := c.cc.Invoke(ctx, "/comm.Comm/SolicitarMonto", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CommServer is the server API for Comm service.
 // All implementations must embed UnimplementedCommServer
 // for forward compatibility
@@ -199,6 +209,7 @@ type CommServer interface {
 	RegistrarJugadaDN(context.Context, *RequestRJDN) (*ResponseRJDN, error)
 	BuscarJugada(*RequestBJ, Comm_BuscarJugadaServer) error
 	ObtenerJugada(*RequestOJ, Comm_ObtenerJugadaServer) error
+	SolicitarMonto(context.Context, *RequestMonto) (*ResponseMonto, error)
 	mustEmbedUnimplementedCommServer()
 }
 
@@ -238,6 +249,9 @@ func (UnimplementedCommServer) BuscarJugada(*RequestBJ, Comm_BuscarJugadaServer)
 }
 func (UnimplementedCommServer) ObtenerJugada(*RequestOJ, Comm_ObtenerJugadaServer) error {
 	return status.Errorf(codes.Unimplemented, "method ObtenerJugada not implemented")
+}
+func (UnimplementedCommServer) SolicitarMonto(context.Context, *RequestMonto) (*ResponseMonto, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SolicitarMonto not implemented")
 }
 func (UnimplementedCommServer) mustEmbedUnimplementedCommServer() {}
 
@@ -456,6 +470,24 @@ func (x *commObtenerJugadaServer) Send(m *ResponseOJ) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _Comm_SolicitarMonto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestMonto)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommServer).SolicitarMonto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/comm.Comm/SolicitarMonto",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommServer).SolicitarMonto(ctx, req.(*RequestMonto))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Comm_ServiceDesc is the grpc.ServiceDesc for Comm service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -498,6 +530,10 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RegistrarJugadaDN",
 			Handler:    _Comm_RegistrarJugadaDN_Handler,
+		},
+		{
+			MethodName: "SolicitarMonto",
+			Handler:    _Comm_SolicitarMonto_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
