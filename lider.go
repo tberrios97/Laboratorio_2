@@ -188,7 +188,7 @@ func failOnError(err error, msg string) {
 }
 
 func informar_jugador_eliminado(id_jugador int, ronda int){
-  conn, err := amqp.Dial("amqp://:@dist59:5672/")
+  conn, err := amqp.Dial("amqp://test:test@dist59:5672/")
   failOnError(err, "Failed to connect to RabbitMQ")
   defer conn.Close()
   ch, err := conn.Channel()
