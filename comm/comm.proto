@@ -83,6 +83,8 @@ message ResponseEtapa {
 message ReponseRonda {
   int32 body = 1;
   bool terminoJuego = 2;
+  int32 montoAcumulado = 3;
+  int32 jugadores = 4;
 }
 
 message ResponsePrimeraEtapa {

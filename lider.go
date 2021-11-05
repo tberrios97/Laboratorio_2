@@ -30,6 +30,8 @@ var juegoActivo bool = false
 var comienzoEtapa bool = false
 var comienzoRonda bool = false
 var jugadasRecolectadas bool = false
+var montoFinal int32 = -1
+var jugadoresFinales int32 = -1
 
 //
 var contadorJugadaJugador [capacidadJugadores]int32
@@ -414,26 +416,33 @@ func (s *CommServer) TerminoRonda(ctx context.Context, in *pb.RequestRonda) (*pb
 
     menu_prints(etapa, ronda, false)
 
-    //Dar comienzo a la siguiente ronda
-    comienzoRonda = true
-    jugadoresListos = 0
-
     //Mostrar información terminado el juego o una etapa
     if in.GetTerminoJuego() || jugadoresActivos <= 1 {
       //Reset de variables para iniciar otra partida
+      montoFinal = SolicitarMonto()
+      jugadoresFinales = jugadoresActivos
       mostrarGanadores()
       resetPartida()
       log.Printf("[*] Partida Finalizada.")
       log.Printf("")
       log.Printf("[*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*][*]")
       log.Printf("")
-      return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
+
+      //Dar comienzo a la siguiente ronda
+      comienzoRonda = true
+      jugadoresListos = 0
+
+      return &pb.ReponseRonda{Body: 1, TerminoJuego: true, MontoAcumulado: montoFinal, Jugadores: jugadoresFinales}, nil
     } else {
       if in.GetRondaFinal() {
         log.Printf("[*] Termino de la Etapa")
         mostrarJugadoresVivos()
         resetContadorJugadores()
       }
+
+      //Dar comienzo a la siguiente ronda
+      comienzoRonda = true
+      jugadoresListos = 0
     }
 
   }
@@ -443,12 +452,12 @@ func (s *CommServer) TerminoRonda(ctx context.Context, in *pb.RequestRonda) (*pb
 
       //Si se termino el juego
       if in.GetTerminoJuego(){
-        return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
+        return &pb.ReponseRonda{Body: 1, TerminoJuego: true, MontoAcumulado: montoFinal, Jugadores: jugadoresFinales}, nil
       } else {
         if jugadoresActivos == 1{
-          return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
+          return &pb.ReponseRonda{Body: 1, TerminoJuego: true, MontoAcumulado: montoFinal, Jugadores: jugadoresFinales}, nil
         } else {
-          return &pb.ReponseRonda{Body: 1, TerminoJuego: false}, nil
+          return &pb.ReponseRonda{Body: 1, TerminoJuego: false, MontoAcumulado: montoFinal, Jugadores: jugadoresFinales}, nil
         }
       }
 
