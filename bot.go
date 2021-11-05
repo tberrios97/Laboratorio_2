@@ -11,7 +11,7 @@ import (
 )
 
 const (
-  address = "localhost:9000"
+  address = "dist57:9000"
 )
 
 func random(min, max int) int {
@@ -51,7 +51,7 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
         return false, false, 0, 0
       }
     }
-    
+
     //Espera del inicio de la siguiente ronda
     if ronda == 4 {
       respuestaRonda, error := cliente.TerminoRonda(ctx, &pb.RequestRonda{Etapa: 1, Ronda: ronda, RondaFinal: true, TerminoJuego: false})
@@ -79,9 +79,9 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
         return ganador, terminoJuego, respuestaRonda.GetMontoAcumulado(), respuestaRonda.GetJugadores()
       }
     }
-    
+
   }
-  
+
   return ganador, terminoJuego, 0, 0
 }
 
@@ -182,7 +182,7 @@ func main(){
   var jugando bool
   var terminoJuego bool
   var numeroJugador int32
-  
+
   //Definicion de la conexión con el servidor
   conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
   if err != nil {
@@ -212,13 +212,13 @@ func main(){
     if numeroJugador == 0{
       return
     }
-    
+
     /*
     *
     * Sección Etapa 1
     *
     */
-    
+
     //Comienzo de la primera etapa
     jugando, terminoJuego, _, _ = juegoEtapa1(cliente, ctx, numeroJugador)
 
@@ -231,7 +231,7 @@ func main(){
     if terminoJuego {
       return
     }
-    
+
     /*
     *
     * Sección Etapa 2
@@ -250,7 +250,7 @@ func main(){
     if terminoJuego {
       return
     }
-    
+
     /*
     *
     * Sección Etapa 3

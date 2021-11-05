@@ -13,7 +13,7 @@ import (
 )
 
 const (
-  address = "localhost:9000"
+  address = "dist57:9000"
 )
 
 func printSeparador(){
@@ -146,7 +146,7 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
     } else {
       fmt.Println("[*] Esperando jugadas de los demás jugadores...")
     }
-    
+
     //Espera del inicio de la siguiente ronda
     if ronda == 4 {
       respuestaRonda, error := cliente.TerminoRonda(ctx, &pb.RequestRonda{Etapa: 1, Ronda: ronda, RondaFinal: true, TerminoJuego: false})
@@ -176,9 +176,9 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
         return ganador, terminoJuego, respuestaRonda.GetMontoAcumulado(), respuestaRonda.GetJugadores()
       }
     }
-    
+
   }
-  
+
   return ganador, terminoJuego, 0, 0
 }
 
@@ -206,7 +206,7 @@ func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   equipo = respuesta.GetBody()
   if equipo == -1{
     jugando = false
-    fmt.Println("[*] Lo sentimos, has sido eliminado al azar.\n[*] Gracias por jugar.") 
+    fmt.Println("[*] Lo sentimos, has sido eliminado al azar.\n[*] Gracias por jugar.")
     return jugando, false, 0, 0
   }
 
@@ -261,7 +261,7 @@ func juegoEtapa3(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   contrincante = respuesta.GetBody()
   if contrincante == -1 {
     jugando = false
-    fmt.Println("[*] Lo sentimos, has sido eliminado al azar.\n[*] Gracias por jugar.") 
+    fmt.Println("[*] Lo sentimos, has sido eliminado al azar.\n[*] Gracias por jugar.")
     return jugando, 0, 0
   }
 
@@ -299,7 +299,7 @@ func main(){
   var terminoJuego bool
   var numeroJugador int32
   var monto, cantidadJugadores int32
-  
+
   //Definicion de la conexión con el servidor
   conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
   if err != nil {
@@ -334,13 +334,13 @@ func main(){
       fmt.Println("[*] No hay cupos disponibles para unirse al juego.\n[*] Finalizando programa de SquidGame.")
       return
     }
-    
+
     /*
     *
     * Sección Etapa 1
     *
     */
-    
+
     fmt.Println("\n")
     printSeparador()
     printSeparador()
@@ -358,18 +358,18 @@ func main(){
 
     //Verificar si ya solo queda un único jugador
     if terminoJuego {
-      
+
       fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", monto/cantidadJugadores, "KRW")
       fmt.Println("[*] Finalizando programa de SquidGame.")
       return
     }
-    
+
     /*
     *
     * Sección Etapa 2
     *
     */
-    
+
     fmt.Println("\n")
     printSeparador()
     printSeparador()
@@ -392,7 +392,7 @@ func main(){
       fmt.Println("[*] Finalizando programa de SquidGame.")
       return
     }
-    
+
     /*
     *
     * Sección Etapa 3
@@ -412,7 +412,7 @@ func main(){
       fmt.Println("[*] Has sido eliminado\n[*] Finalizando programa de SquidGame.")
       return
     }
-    
+
     fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", monto/cantidadJugadores, "KRW")
     fmt.Println("[*] Finalizando programa de SquidGame.")
 
