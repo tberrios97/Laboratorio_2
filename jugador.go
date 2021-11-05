@@ -94,7 +94,7 @@ func menu_prints(esEtapa bool, etapa int, cliente pb.CommClient, ctx context.Con
   printSeparador()
   printSeparador()
   fmt.Println("\n")
-  
+
   return
 }
 
@@ -349,7 +349,13 @@ func main(){
 
     //Verificar si ya solo queda un único jugador
     if terminoJuego {
-      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", 0, "KRW")
+      respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+      if err != nil {
+        log.Fatalf("Error en la conexión con el servidor: %v", err)
+      }
+
+      var monto int32 = respuesta.GetMonto()
+      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", monto, "KRW")
       fmt.Println("[*] Finalizando programa de SquidGame.")
       return
     }
@@ -377,7 +383,13 @@ func main(){
 
     //Verificar si ya solo queda un único jugador
     if terminoJuego {
-      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", 0, "KRW")
+      respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+      if err != nil {
+        log.Fatalf("Error en la conexión con el servidor: %v", err)
+      }
+
+      var monto int32 = respuesta.GetMonto()
+      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", monto, "KRW")
       fmt.Println("[*] Finalizando programa de SquidGame.")
       return
     }
@@ -401,9 +413,13 @@ func main(){
       fmt.Println("[*] Has sido eliminado\n[*] Finalizando programa de SquidGame.")
       return
     }
+    respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+    if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
 
-    pozo = 100
-    fmt.Println("[*] Feliciticaciones, has sido uno de los ganadores.\n[*] Has ganado", pozo, "KRW")
+    var monto int32 = respuesta.GetMonto()
+    fmt.Println("[*] Feliciticaciones, has sido uno de los ganadores.\n[*] Has ganado", monto, "KRW")
 
   }
   //Cerrar programa
