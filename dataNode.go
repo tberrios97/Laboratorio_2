@@ -86,6 +86,19 @@ func archivoJugada(n_jugador int, n_ronda int, jugada int){
   return
 }
 
+func (s *CommServer) ReiniciarPartida(ctx context.Context, in *pb.RequestTest) (*pb.ResponseTest, error){
+	for n_jugador := 1; n_jugador <= 16; jugador++ {
+		for n_ronda := 1; n_ronda <= 3; ++ {
+			nombre_archivo := "jugador_"+n_jugador+"__ronda_"+n_ronda+".txt"
+			if (existeArchivo(nombre_archivo)){
+				err := os.Remove(nombre_archivo)
+				check(err)
+			}
+		}
+	}
+	return &pb.ResponseTest{Body: "hola jorge :D"}, nil
+}
+
 func (s *CommServer) ObtenerJugada(in *pb.RequestOJ, stream pb.Comm_ObtenerJugadaServer) error{
 	var jugadas [4]int
 
@@ -94,13 +107,13 @@ func (s *CommServer) ObtenerJugada(in *pb.RequestOJ, stream pb.Comm_ObtenerJugad
 
 	jugadas = obtenerJugadasTexto(int(in.GetNJugador()), int(in.GetNRonda()))
 
-	for i := range jugadas {
+	for i := 0;i < 4;i++ {
 		if (jugadas[i] == 0){
-			continue
+			break
 		}
 		if err := stream.Send(&pb.ResponseOJ{Jugadas: int32(jugadas[i])}); err != nil {
-				return err
-			}
+			return err
+		}
 	}
 
 	return nil

@@ -86,6 +86,34 @@ func archivoJugada(n_jugador int, n_ronda int, direccion_dataNode string){
   return
 }
 
+func resetDataNode(string address){
+  coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+  if err != nil {
+    log.Fatalf("did not connect: %v", err)
+  }
+  defer coneccion.Close()
+  cliente := pb.NewCommClient(coneccion)
+  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  defer cancel()
+  _, err = cliente.ReiniciarPartida(ctx, &pb.RequestTest{Body: "hola jorge :D"})
+  if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
+  return
+}
+
+func (s *CommServer) ReiniciarPartida(ctx context.Context, in *pb.RequestTest) (*pb.ResponseTest, error){
+	nombre_archivo:="registro_jugadas.txt"
+	if (existeArchivo(nombre_archivo)){
+		err := os.Remove(nombre_archivo)
+		check(err)
+	}
+	resetDataNode("localhost:9300")
+	//resetDataNode("localhost:9300")
+	//resetDataNode("localhost:9300")
+	return &pb.ResponseTest{Body: "hola jorge :D"}, nil
+}
+
 func (s *CommServer) BuscarJugada(in *pb.RequestBJ, stream pb.Comm_BuscarJugadaServer) error{
 	var direccion string
 

@@ -76,6 +76,22 @@ func resetPozo(){
   return
 }
 
+func resetNameNode(){
+  coneccion, err := grpc.Dial("localhost:9100", grpc.WithInsecure(), grpc.WithBlock())
+  if err != nil {
+    log.Fatalf("did not connect: %v", err)
+  }
+  defer coneccion.Close()
+  cliente := pb.NewCommClient(coneccion)
+  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  defer cancel()
+  _, err = cliente.ReiniciarPartida(ctx, &pb.RequestTest{Body: "hola jorge :D"})
+  if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
+  return
+}
+
 func resetPartida() {
   jugadoresActivos = 0
   jugadoresListos = 0
@@ -91,6 +107,7 @@ func resetPartida() {
     contadorJugadaJugador[i] = 0
   }
   resetPozo()
+  resetNameNode()
 }
 
 func abs(number int32) int32 {
