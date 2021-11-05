@@ -34,21 +34,27 @@ func obtenerJugadasTexto(n_jugador int, n_ronda int) [4]int {
 	nombre_archivo := "jugador_"+strconv.Itoa(n_jugador)+"__ronda_"+strconv.Itoa(n_ronda)+".txt"
 	log.Printf("nombre del archivo: %v", nombre_archivo)
 
-	archivo, err := os.Open(nombre_archivo)
-  if err != nil {
-    log.Fatal(err)
-  }
-  defer archivo.Close()
+	if(existeArchivo(nombre_archivo)){
+		archivo, err := os.Open(nombre_archivo)
+	  if err != nil {
+	    log.Fatal(err)
+	  }
+	  defer archivo.Close()
 
-  scanner := bufio.NewScanner(archivo)
+	  scanner := bufio.NewScanner(archivo)
 
-	posicion := 0
-  for scanner.Scan() {
-    linea := strings.Replace(scanner.Text(), "\n","",-1)
-		jugadas[posicion], _ = strconv.Atoi(linea)
-		log.Printf("archivo jugadas en posicion %d es %v", posicion, jugadas[posicion])
-		posicion++
-  }
+		posicion := 0
+	  for scanner.Scan() {
+	    linea := strings.Replace(scanner.Text(), "\n","",-1)
+			jugadas[posicion], _ = strconv.Atoi(linea)
+			log.Printf("archivo jugadas en posicion %d es %v", posicion, jugadas[posicion])
+			posicion++
+	  }
+	}else{
+		for i := 0;i < 4;i++ {
+			jugadas[i] = -1
+		}
+	}
 
 	log.Printf("arreglo jugadas %v", jugadas)
 	return jugadas
@@ -150,7 +156,7 @@ func (s *CommServer) RegistrarJugadaDN(ctx context.Context, in *pb.RequestRJDN) 
 
 func main() {
 	resetDataNode()
-	
+
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("fallo el escuchar: %v", err)
