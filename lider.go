@@ -278,11 +278,11 @@ func menu_prints(etapa int32, ronda int32, esEtapa bool)(){
         jugadas = buscar_jugada_nameNode(int32(opcion), etapa, "dist60:9100")
         posicion := 0
         for {
-          if (jugadas[posicion] == -1) {
-            log.Printf("[*] El jugador seleccionado no realizó jugadas en esta etapa")
+          if (posicion == 4) {
             break
           }
-          if (posicion == 4) {
+          if (jugadas[posicion] == -1) {
+            log.Printf("[*] El jugador seleccionado no realizó jugadas en esta etapa")
             break
           }
           if (jugadas[posicion] == 0){
