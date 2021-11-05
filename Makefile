@@ -23,19 +23,36 @@ maquina4:
 	go run ./dataNode.go & disown
 
 jugadores:
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
-	go run ./bot.go & disown
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
 	go run ./jugador.go
+
+bots:
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
+	go run ./bot.go &
