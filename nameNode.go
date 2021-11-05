@@ -3,6 +3,13 @@ package main
 import (
 	"log"
 	"net"
+  "bufio"
+  "strings"
+  "time"
+	"io"
+  "os"
+  "strconv"
+  "math/rand"
 	"context"
 	pb "example.com/go-comm-grpc/comm"
 	"google.golang.org/grpc"
@@ -14,33 +21,137 @@ func random(min, max int) int {
 }
 
 const (
-  port = ":9000"
-  var direcciones_dataNode [3]string = [3]{"localhost", "localhost", "localhost"}
+  port = ":9100"
 )
+
+var direcciones_dataNode = []string{"localhost", "localhost", "localhost"}
 
 type CommServer struct {
 	pb.UnimplementedCommServer
 }
 
-func (s *CommServer) RegistrarJugadaJugador(ctx context.Context, in *pb.RequestRJJ) (*pb.ResponseRJJ, error){
-	log.Printf("Numero jugador: %d", in.GetN_jugador())
-  log.Printf("Numero ronda: %d", in.GetN_ronda())
-  log.Printf("Jugada: %d", in.GetJugada())
+func existeArchivo(archivo string) bool {
+    info, err := os.Stat(archivo)
+    if os.IsNotExist(err) {
+        return false
+    }
+    return !info.IsDir()
+}
 
-  pos_aleatorio := random(0,2)
+func buscarEnArchivo(n_jugador int, n_ronda int) string{
+  var retorno string
+  archivo, err := os.Open("registro_jugadas.txt")
+  if err != nil {
+    log.Fatal(err)
+  }
+  defer archivo.Close()
 
-  conn, err := grpc.Dial(direcciones_dataNode[pos_aleatorio], grpc.WithInsecure(), grpc.WithBlock())
+  scanner := bufio.NewScanner(archivo)
+  for scanner.Scan() {
+    linea := strings.Split(scanner.Text()," ")
+    if (linea[0][len(linea[0])-1:] == strconv.Itoa(n_jugador) && linea[1][len(linea[1])-1:] == strconv.Itoa(n_ronda)) {
+      retorno = strings.Replace(linea[2], "\n","",-1)
+    }
+  }
+
+  return retorno
+}
+
+func archivoJugada(n_jugador int, n_ronda int, direccion_dataNode string){
+  //poner en el README esto
+  nombre_archivo := "registro_jugadas.txt"
+  if (existeArchivo(nombre_archivo)) {
+    archivo, err := os.OpenFile(nombre_archivo, os.O_WRONLY|os.O_APPEND, 0644)
+    if err != nil {
+      log.Fatalf("fallo la apertura del archivo: %s", err)
+    }
+    defer archivo.Close()
+    linea := "Jugador_"+strconv.Itoa(n_jugador)+" Ronda_"+strconv.Itoa(n_ronda)+" "+direccion_dataNode+"\n"
+    _, err = archivo.WriteString(linea+"\n")
+    if err != nil {
+      log.Fatalf("fallo escritura en archivo: %s", err)
+    }
+  } else {
+    archivo, err := os.Create(nombre_archivo)
+    if err != nil {
+      log.Fatalf("fallo escritura en archivo: %s", err)
+    }
+    defer archivo.Close()
+    linea := "Jugador_"+strconv.Itoa(n_jugador)+" Ronda_"+strconv.Itoa(n_ronda)+" "+direccion_dataNode
+    _, err = archivo.WriteString(linea+"\n")
+    if err != nil {
+      log.Fatalf("fallo escritura en archivo: %s", err)
+    }
+  }
+  return
+}
+
+func (s *CommServer) BuscarJugada(in *pb.RequestBJ, stream pb.Comm_BuscarJugadaServer) error{
+	var direccion string
+
+	log.Printf("Numero jugador: %d", in.GetNJugador())
+  log.Printf("Numero ronda: %d", in.GetNRonda())
+
+	direccion = buscarEnArchivo(int(in.GetNJugador()), int(in.GetNRonda()))
+
+	conn, err := grpc.Dial(direccion+":9300", grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("no se conecto: %v", err)
 	}
 	defer conn.Close()
 
 	c := pb.NewCommClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(),10*time.Second)
+	defer cancel()
 
+	streaming, err := c.ObtenerJugada(ctx, &pb.RequestOJ{NJugador: in.GetNJugador(), NRonda: in.GetNRonda()})
+	if err != nil {
+		log.Fatalf("%v.ListFeatures(_) = _, %v", c, err)
+	}
+	for {
+		jugada, err := streaming.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("%v.ListFeatures(_) = _, %v", c, err)
+		}
+		log.Printf("Jugada recibida: %v", jugada.GetJugadas())
+		if err := stream.Send(&pb.ResponseBJ{Jugadas: jugada.GetJugadas()}); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *CommServer) RegistrarJugadaJugador(ctx context.Context, in *pb.RequestRJJ) (*pb.ResponseRJJ, error){
+  var direccion string
+  var pos_aleatorio int
+
+	log.Printf("Numero jugador: %d", in.GetNJugador())
+  log.Printf("Numero ronda: %d", in.GetNRonda())
+  log.Printf("Jugada: %d", in.GetJugada())
+
+  if(int(in.GetNRonda()) == 1 && existeArchivo("registro_jugadas.txt")){
+    direccion = buscarEnArchivo(int(in.GetNJugador()), int(in.GetNRonda()))
+  }else{
+    pos_aleatorio = random(0,2)
+    direccion = direcciones_dataNode[pos_aleatorio]
+    archivoJugada(int(in.GetNJugador()), int(in.GetNRonda()), direccion)
+  }
+
+  conn, err := grpc.Dial(direccion+":9300", grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		log.Fatalf("no se conecto: %v", err)
+	}
+	defer conn.Close()
+
+	c := pb.NewCommClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	response, err := c.RequestRJDN(ctx, &pb.RequestRJDN{in.GetN_jugador(), in.GetN_ronda(), in.GetJugada()})
+	response, err := c.RegistrarJugadaDN(ctx, &pb.RequestRJDN{NJugador: in.GetNJugador(), NRonda: in.GetNRonda(), Jugada: in.GetJugada()})
 	if err != nil {
 		log.Fatalf("Error when calling SayHello: %v", err)
 	}
