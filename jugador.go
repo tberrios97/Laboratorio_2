@@ -5,7 +5,7 @@ import (
   "log"
   "time"
   "context"
-  //"strconv"
+  "strconv"
   //"strings"
   "math/rand"
   "google.golang.org/grpc"
@@ -221,7 +221,7 @@ func main(){
   var pozo int
   var input int
   var jugando bool
-  //var terminoJuego bool
+  var terminoJuego bool
   var numeroJugador int32
   
   //Definicion de la conexión con el servidor
