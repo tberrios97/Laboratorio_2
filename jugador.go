@@ -285,7 +285,6 @@ func juegoEtapa3(cliente pb.CommClient, ctx context.Context, numeroJugador int32
 }
 
 func main(){
-  var pozo int
   var input int
   var jugando bool
   var terminoJuego bool
@@ -413,12 +412,12 @@ func main(){
       fmt.Println("[*] Has sido eliminado\n[*] Finalizando programa de SquidGame.")
       return
     }
-    respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+    respuestaMonto, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
     if err != nil {
       log.Fatalf("Error en la conexión con el servidor: %v", err)
     }
 
-    var monto int32 = respuesta.GetMonto()
+    var monto int32 = respuestaMonto.GetMonto()
     fmt.Println("[*] Feliciticaciones, has sido uno de los ganadores.\n[*] Has ganado", monto, "KRW")
 
   }
