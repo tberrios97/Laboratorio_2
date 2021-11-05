@@ -194,6 +194,8 @@ func (s *CommServer) RegistrarJugadaJugador(ctx context.Context, in *pb.RequestR
 }
 
 func main() {
+	resetNameNode()
+	
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("fallo el escuchar: %v", err)
