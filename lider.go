@@ -32,6 +32,7 @@ var jugadasRecolectadas bool = false
 var contadorJugadaJugador [capacidadJugadores]int32
 var conteoEquipo1 int32
 var conteoEquipo2 int32
+var equipoGanador int32
 var jugadaLider int32
 
 type CommServer struct {
@@ -122,6 +123,8 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
       }
       //Crear equipos
       elegirEquipos()
+      conteoEquipo1 = 0
+      conteoEquipo2 = 0
     }
 
     //Setear variables para ejecutar la siguiente etapa
@@ -155,7 +158,7 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
   }
 }
 
-func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.ReponseRonda, error){
+func (s *CommServer) TerminoRonda(ctx context.Context, in *pb.RequestRonda) (*pb.ReponseRonda, error){
   var input int
   comienzoRonda = false
   jugadoresListos ++
@@ -191,7 +194,6 @@ func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.
 
 func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrimeraEtapa) (*pb.ResponsePrimeraEtapa, error) {
   jugadasRecolectadas = false
-  jugadoresListos ++
 
   jugada := in.GetJugada()
   ronda := in.GetRonda()
@@ -201,10 +203,11 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
   contadorJugadaJugador[jugador - 1] = contadorJugadaJugador[jugador - 1] + jugada
 
   //Condición cuando el último jugador haya realizado su jugada
+  jugadoresListos ++
   if jugadoresListos == jugadoresActivos && juegoActivo{
     jugadoresListos = 0
-    jugadasRecolectadas = true
     jugadaLider = random(6, 10)
+    jugadasRecolectadas = true
     log.Printf("Jugada del lider: %d", jugadaLider)
   }
 
@@ -248,8 +251,68 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
 }
 
 func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegundaEtapa) (*pb.ResponseSegundaEtapa, error) {
+  jugadasRecolectadas = false
+  
   jugada := in.GetJugada()
   jugador := in.GetJugador()
+
+  //Contar jugada segun el equipo del jugador
+  if contadorJugadaJugador[jugador - 1] == 1 {
+    conteoEquipo1 = conteoEquipo1 + jugada
+  } else {
+    conteoEquipo2 = conteoEquipo2 + jugada
+  }
+
+  //Condición cuando el último jugador haya realizado su jugada
+  jugadoresListos ++
+  if jugadoresListos == jugadoresActivos && juegoActivo{
+    jugadoresListos = 0
+    jugadaLider = random(1, 4)
+    
+    //Verificar que equipo gano, en el caso
+    if conteoEquipo1%2 == jugadaLider%2 && conteoEquipo2%2 == jugadaLider%2 {
+      //Caso en que ambos equipos hayan ganado
+      equipoGanador = -1
+    } else if conteoEquipo1%2 == jugadaLider%2 {
+      //Caso en que el equipo 1 haya ganado
+      equipoGanador = 1
+      jugadoresActivos = jugadoresActivos/2
+    } else if conteoEquipo2%2 == jugadaLider%2{
+      //Caso en que el equipo 2 haya ganado
+      equipoGanador = 2
+      jugadoresActivos = jugadoresActivos/2
+    } else {
+      //Caso en que ningún equipo haya ganado
+      //Eliminar un equipo al azar
+      var equipoEliminado int32 = random(1, 2)
+      if equipoEliminado == 1 {
+        equipoGanador = 2
+      } else {
+        equipoGanador = 1
+      }
+      jugadoresActivos = jugadoresActivos/2
+    }
+
+    jugadasRecolectadas = true
+    log.Printf("Jugada del lider: %d", jugadaLider)
+  }
+
+  for {
+    //Cuando todos los jugadores hayan realizado sus jugadas
+    if jugadasRecolectadas {
+      //Caso en que ambos equipos ganaron
+      if equipoGanador == -1 {
+        return &pb.ResponseSegundaEtapa{Estado: true}, nil
+      } else {
+        //Verificar si el jugador sobrevivio o no
+        if contadorJugadaJugador[jugador - 1] == equipoGanador {
+          return &pb.ResponseSegundaEtapa{Estado: true}, nil
+        } else {
+          return &pb.ResponseSegundaEtapa{Estado: false}, nil
+        }
+      }
+    }
+  }
 
 }
 

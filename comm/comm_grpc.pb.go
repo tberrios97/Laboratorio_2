@@ -21,7 +21,7 @@ type CommClient interface {
 	FunTest(ctx context.Context, in *RequestTest, opts ...grpc.CallOption) (*ResponseTest, error)
 	UnirseJuegoCalamar(ctx context.Context, in *RequestUnirse, opts ...grpc.CallOption) (*ResponseUnirse, error)
 	InicioEtapa(ctx context.Context, in *RequestEtapa, opts ...grpc.CallOption) (*ResponseEtapa, error)
-	InicioRonda(ctx context.Context, in *RequestRonda, opts ...grpc.CallOption) (*ReponseRonda, error)
+	TerminoRonda(ctx context.Context, in *RequestRonda, opts ...grpc.CallOption) (*ReponseRonda, error)
 	JugadaPrimeraEtapa(ctx context.Context, in *RequestPrimeraEtapa, opts ...grpc.CallOption) (*ResponsePrimeraEtapa, error)
 	JugadaSegundaEtapa(ctx context.Context, in *RequestSegundaEtapa, opts ...grpc.CallOption) (*ResponseSegundaEtapa, error)
 	JugadaTerceraEtapa(ctx context.Context, in *RequestTerceraEtapa, opts ...grpc.CallOption) (*ResponseTerceraEtapa, error)
@@ -67,9 +67,9 @@ func (c *commClient) InicioEtapa(ctx context.Context, in *RequestEtapa, opts ...
 	return out, nil
 }
 
-func (c *commClient) InicioRonda(ctx context.Context, in *RequestRonda, opts ...grpc.CallOption) (*ReponseRonda, error) {
+func (c *commClient) TerminoRonda(ctx context.Context, in *RequestRonda, opts ...grpc.CallOption) (*ReponseRonda, error) {
 	out := new(ReponseRonda)
-	err := c.cc.Invoke(ctx, "/comm.Comm/InicioRonda", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/comm.Comm/TerminoRonda", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +201,7 @@ type CommServer interface {
 	FunTest(context.Context, *RequestTest) (*ResponseTest, error)
 	UnirseJuegoCalamar(context.Context, *RequestUnirse) (*ResponseUnirse, error)
 	InicioEtapa(context.Context, *RequestEtapa) (*ResponseEtapa, error)
-	InicioRonda(context.Context, *RequestRonda) (*ReponseRonda, error)
+	TerminoRonda(context.Context, *RequestRonda) (*ReponseRonda, error)
 	JugadaPrimeraEtapa(context.Context, *RequestPrimeraEtapa) (*ResponsePrimeraEtapa, error)
 	JugadaSegundaEtapa(context.Context, *RequestSegundaEtapa) (*ResponseSegundaEtapa, error)
 	JugadaTerceraEtapa(context.Context, *RequestTerceraEtapa) (*ResponseTerceraEtapa, error)
@@ -226,8 +226,8 @@ func (UnimplementedCommServer) UnirseJuegoCalamar(context.Context, *RequestUnirs
 func (UnimplementedCommServer) InicioEtapa(context.Context, *RequestEtapa) (*ResponseEtapa, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InicioEtapa not implemented")
 }
-func (UnimplementedCommServer) InicioRonda(context.Context, *RequestRonda) (*ReponseRonda, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InicioRonda not implemented")
+func (UnimplementedCommServer) TerminoRonda(context.Context, *RequestRonda) (*ReponseRonda, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TerminoRonda not implemented")
 }
 func (UnimplementedCommServer) JugadaPrimeraEtapa(context.Context, *RequestPrimeraEtapa) (*ResponsePrimeraEtapa, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JugadaPrimeraEtapa not implemented")
@@ -320,20 +320,20 @@ func _Comm_InicioEtapa_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Comm_InicioRonda_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Comm_TerminoRonda_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestRonda)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(CommServer).InicioRonda(ctx, in)
+		return srv.(CommServer).TerminoRonda(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/comm.Comm/InicioRonda",
+		FullMethod: "/comm.Comm/TerminoRonda",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(CommServer).InicioRonda(ctx, req.(*RequestRonda))
+		return srv.(CommServer).TerminoRonda(ctx, req.(*RequestRonda))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -508,8 +508,8 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Comm_InicioEtapa_Handler,
 		},
 		{
-			MethodName: "InicioRonda",
-			Handler:    _Comm_InicioRonda_Handler,
+			MethodName: "TerminoRonda",
+			Handler:    _Comm_TerminoRonda_Handler,
 		},
 		{
 			MethodName: "JugadaPrimeraEtapa",

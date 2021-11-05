@@ -78,15 +78,19 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
 
     //Espera del inicio de la siguiente ronda
     if ronda == 4 {
-      respuestaRonda, error := cliente.InicioRonda(ctx, &pb.RequestRonda{RondaFinal: true})
+      respuestaRonda, error := cliente.TerminoRonda(ctx, &pb.RequestRonda{RondaFinal: true})
+      if error != nil {
+        log.Fatalf("Error en la conexión con el servidor: %v", error)
+      }
+      terminoJuego = respuestaRonda.GetTerminoJuego()
     } else {
-      respuestaRonda, error := cliente.InicioRonda(ctx, &pb.RequestRonda{RondaFinal: false})
+      respuestaRonda, error := cliente.TerminoRonda(ctx, &pb.RequestRonda{RondaFinal: false})
+      if error != nil {
+        log.Fatalf("Error en la conexión con el servidor: %v", error)
+      }
+      terminoJuego = respuestaRonda.GetTerminoJuego()
     }
-    if error != nil {
-      log.Fatalf("Error en la conexión con el servidor: %v", error)
-    }
-    terminoJuego = respuestaRonda.GetTerminoJuego()
-
+    
     //Comprobar si sigue ha sido eliminado el jugador
     if(!estado){
       fmt.Println("[*] Has sido eliminado.\n[*] Gracias por jugar.")
@@ -108,10 +112,11 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   return ganador, terminoJuego
 }
 
-func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32) bool{
-  var equipo int
-  var jugada int
-  var respuesta int
+func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32) (bool, bool){
+  var equipo int32
+  var jugada int32
+  var estado bool
+  var terminoJuego bool
   jugando := true
   fmt.Println("[*] Comenzado segunda etapa. Próximo juego")
   fmt.Println("[*] || Juego Tirar la Cuerda ||")
@@ -125,12 +130,11 @@ func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   if err != nil {
     log.Fatalf("Error en la conexión con el servidor: %v", err)
   }
-
   equipo = respuesta.GetBody()
   if equipo == -1{
     jugando = false
     fmt.Println("[*] Lo sentimos, has sido eliminado al azar.\n[*] Gracias por jugar.") 
-    return jugando
+    return jugando, false
   }
 
   fmt.Println("[*] Perteneces al equipo:", equipo)
@@ -138,15 +142,26 @@ func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   fmt.Scan(&jugada)
 
   //Enviar al Líder la jugada y recibir respuesta
-  respuesta = 1
-  if respuesta == 1 {
+  respuestaEtapa, err := cliente.JugadaSegundaEtapa(ctx, &pb.RequestSegundaEtapa{Jugada: jugada, Jugador: numeroJugador})
+  if err != nil {
+    log.Fatalf("Error en la conexión con el servidor: %v", err)
+  }
+
+  //Guardar el estado del jugador, si ha sido eliminado o no
+  estado = respuestaEtapa.GetEstado()
+  if estado {
     jugando = true
   }else {
     jugando = false
-    fmt.Println("[*] Has sido eliminado.\n[*] Gracias por jugar.")
   }
 
-  return jugando
+  respuestaRonda, err := cliente.TerminoRonda(ctx, &pb.RequestRonda{RondaFinal: true})
+  if err != nil {
+    log.Fatalf("Error en la conexión con el servidor: %v", err)
+  }
+  terminoJuego = respuestaRonda.GetTerminoJuego()
+
+  return jugando, terminoJuego
 }
 
 func juego_etapa_3() bool{
@@ -257,7 +272,7 @@ func main(){
     printSeparador()
 
     //Comienzo de la segunda etapa
-    jugando = juegoEtapa2(cliente, ctx, numeroJugador)
+    jugando, terminoJuego = juegoEtapa2(cliente, ctx, numeroJugador)
 
     //Verificar si el jugador sigue jugando
     if !jugando{
@@ -265,18 +280,26 @@ func main(){
       return
     }
 
-    //Esperando respuesta del servidor para iniciar la etapa
-    fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
-    respuestaEtapa, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 3, NumeroJugador: numeroJugador})
-    if err != nil {
-      log.Fatalf("Error en la conexión con el servidor: %v", err)
-    }
     //Verificar si ya solo queda un único jugador
-    terminoJuego = respuestaEtapa.GetTerminoJuego()
     if terminoJuego {
       fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", 0, "KRW")
       fmt.Println("[*] Finalizando programa de SquidGame.")
       return
+    }
+
+    /*
+    *
+    * Sección Etapa 3
+    *
+    */
+
+    printSeparador()
+
+    //Esperando respuesta del servidor para iniciar la etapa
+    fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
+    _, err = cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 3, NumeroJugador: numeroJugador})
+    if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
     }
 
     jugando = juego_etapa_3()
