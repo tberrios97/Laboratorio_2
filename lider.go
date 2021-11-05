@@ -7,6 +7,7 @@ import (
   //"fmt"
   "time"
   "context"
+  "strconv"
   "math/rand"
   "google.golang.org/grpc"
   "github.com/streadway/amqp"
@@ -16,6 +17,7 @@ import (
 const (
   port = ":9000"
   capacidadJugadores = 2
+  address = "localhost:3000"  //REVISAR
 )
 
 //
@@ -468,6 +470,22 @@ func failOnError(err error, msg string) {
   }
 }
 
+func SolicitarMonto() int32{
+  coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+  if err != nil {
+    log.Fatalf("did not connect: %v", err)
+  }
+  defer coneccion.Close()
+  cliente := pb.NewCommClient(coneccion)
+  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  defer cancel()
+  response, err := cliente.SolicitarMonto(ctx, &pb.RequestMonto{MontoAcumulado: int32(1)}) //Revisar
+  if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
+  return response.GetMontoAcumulado()
+}
+
 func registrar_jugada_nameNode(id_jugador int32, num_ronda int32, jugada int32, direccion_nameNode string) string{
   conn, err := grpc.Dial(direccion_nameNode, grpc.WithInsecure(), grpc.WithBlock())
   if err != nil {
@@ -529,29 +547,45 @@ func informar_jugador_eliminado(id_jugador int, ronda int){
   log.Printf("[*] Jugador eliminado informado al pozo")
 }
 
-func fin_ronda(jugadores [16]int,ronda int){
-  for i := 0; i < 16; i++ {
-      if jugadores[i] == -1{
-        informar_jugador_eliminado(i, ronda)
-      }
+func menu_prints(opcion int, adicional int)(){ //adicional es para agregar el numero del jugador eliminado | el numero de ganadores | numero de etapa
+  if opcion == 0{ //Inicio
+    log.Printf("[*] Bienvenidos al juego del Calamar\n")
+    log.Printf("[*] Esperando jugadores...\n")
+
+  }else if opcion == 1{ //Jugador eliminado
+    log.Printf("[*] Jugador"+strconv.Itoa(adicional)+"eliminado\n")
+    log.Printf("[*] %d jugadores restantes\n", jugadoresActivos)
+
+  }else if opcion == 2{ //Pedir monto acumulado
+    log.Printf("[*] Solicitando el monto total acumulado...\n")
+    SolicitarMonto()
+
+  }else if opcion == 3{ //Ganadores
+    if adicional > 1{
+      fmt.Println("[*] El juego ha finalizado, tenemos %d ganadores!\n",adicional)
+      fmt.Println("[*] Felicidades! han ganado el Juego del Calamar\n") 
+    }else{
+      fmt.Println("[*] El juego ha finalizado, tenemos un ganador!\n")
+      fmt.Println("[*] Felicidades! has ganado el Juego del Calamar\n")
     }
+  }else if opcion ==4{ //Inicio etapa
+    if adicional == 1{
+      fmt.Println("[*] Comienza la Etapa 1: Luz Roja, Luz Verde\n") 
+    }else if adicional ==2{
+      fmt.Println("[*] Comienza la Etapa 2: Tirar la cuerda\n") 
+    }else{
+      fmt.Println("[*] Comienza la Etapa 3: Todo o nada\n") 
+    }
+  }else if opcion ==5{ //Pedir jugadas
+    log.Printf("[*] Solicitando jugadas del jugador"+strconv.Itoa(adicional)+"...\n")
+  }
+  return
 }
 
 func main(){
   //Seteo de semilla aleatoria para que funcione mejor el random
   rand.Seed(time.Now().UnixNano())
-  /*
-  //Hay que decidir como los tendremos, pensaba un numero para identificarlos y -1 si muere
-  var jugadores[16] int
-  for i := 0; i < 16; i++ {
-    jugadores[i] = i
-  }
-  jugadores[4] = -1 //Mato al jugador de la pos 4
-  ronda := 3
-  fin_ronda(jugadores,ronda) //al terminar una ronda se revisa el estado de los jugadores
-  jugadores[7] = -1
-  fin_ronda(jugadores,ronda)
-  */
+
   //var input int
   //response := registrar_jugada_nameNode(6 ,1 ,4, "localhost:9100")
   //log.Printf("Response : %v", response)
