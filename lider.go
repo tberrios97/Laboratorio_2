@@ -267,14 +267,6 @@ func menu_prints(etapa int32, ronda int32, esEtapa bool)(){
       }
     }
   }
-  
-  /*
-  if opcion == 0{ //Inicio
-    log.Printf("[*] Bienvenidos al juego del Calamar\n")
-    log.Printf("[*] Esperando jugadores...\n")
-
-  }
-  */
   return
 }
 
@@ -613,6 +605,11 @@ func (s *CommServer) JugadaTerceraEtapa(ctx context.Context, in *pb.RequestTerce
     }
   }
 
+}
+
+func (s *CommServer) PedirMonto(ctx context.Context, in *pb.RequestPedirMonto) (*pb.ResponsePedirMonto, error) {
+  var monto int32 = SolicitarMonto()
+  return &pb.ResponsePedirMonto{Monto: monto}, nil
 }
 
 func buscar_jugada_nameNode(id_jugador int32, num_ronda int32, direccion_nameNode string) [4]int{
