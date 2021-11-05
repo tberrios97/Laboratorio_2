@@ -71,7 +71,7 @@ func archivoJugada(n_jugador int, n_ronda int, direccion_dataNode string){
       log.Fatalf("fallo la apertura del archivo: %s", err)
     }
     defer archivo.Close()
-    linea := "Jugador_"+strconv.Itoa(n_jugador)+" Ronda_"+strconv.Itoa(n_ronda)+" "+direccion_dataNode+"\n"
+    linea := "Jugador_"+strconv.Itoa(n_jugador)+" Ronda_"+strconv.Itoa(n_ronda)+" "+direccion_dataNode+""
     _, err = archivo.WriteString(linea+"\n")
     if err != nil {
       log.Fatalf("fallo escritura en archivo: %s", err)
@@ -82,7 +82,7 @@ func archivoJugada(n_jugador int, n_ronda int, direccion_dataNode string){
       log.Fatalf("fallo escritura en archivo: %s", err)
     }
     defer archivo.Close()
-    linea := "Jugador_"+strconv.Itoa(n_jugador)+" Ronda_"+strconv.Itoa(n_ronda)+" "+direccion_dataNode
+    linea := "Jugador_"+strconv.Itoa(n_jugador)+" Ronda_"+strconv.Itoa(n_ronda)+" "+direccion_dataNode+""
     _, err = archivo.WriteString(linea+"\n")
     if err != nil {
       log.Fatalf("fallo escritura en archivo: %s", err)
