@@ -85,11 +85,15 @@ func archivoJugada(n_jugador int, n_ronda int, jugada int){
 
   return
 }
-
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
 func (s *CommServer) ReiniciarPartida(ctx context.Context, in *pb.RequestTest) (*pb.ResponseTest, error){
-	for n_jugador := 1; n_jugador <= 16; jugador++ {
-		for n_ronda := 1; n_ronda <= 3; ++ {
-			nombre_archivo := "jugador_"+n_jugador+"__ronda_"+n_ronda+".txt"
+	for n_jugador := 1; n_jugador <= 16; n_jugador++ {
+		for n_ronda := 1; n_ronda <= 3; n_ronda++ {
+			nombre_archivo := "jugador_" + strconv.Itoa(n_jugador) + "__ronda_" + strconv.Itoa(n_ronda)+".txt"
 			if (existeArchivo(nombre_archivo)){
 				err := os.Remove(nombre_archivo)
 				check(err)

@@ -276,6 +276,9 @@ func menu_prints(etapa int32, ronda int32, esEtapa bool)(){
         jugadas = buscar_jugada_nameNode(int32(opcion), etapa, "localhost:9100")
         posicion := 0
         for {
+          if posicion == 4 {
+            break
+          }
           if (jugadas[posicion] == 0){
             break
           }
@@ -651,34 +654,34 @@ func (s *CommServer) PedirMonto(ctx context.Context, in *pb.RequestPedirMonto) (
 func buscar_jugada_nameNode(id_jugador int32, num_ronda int32, direccion_nameNode string) [4]int{
   var jugadas [4]int
   conn, err := grpc.Dial(direccion_nameNode, grpc.WithInsecure(), grpc.WithBlock())
-    if err != nil {
-        log.Fatalf("No se pudo lograr conexión: %v", err)
-    }
-    defer conn.Close()
+  if err != nil {
+      log.Fatalf("No se pudo lograr conexión: %v", err)
+  }
+  defer conn.Close()
 
-    c := pb.NewCommClient(conn)
+  c := pb.NewCommClient(conn)
 
-    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-    defer cancel()
+  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+  defer cancel()
 
-    response, err := c.BuscarJugada(ctx, &pb.RequestBJ{NJugador: id_jugador, NRonda: num_ronda})
+  response, err := c.BuscarJugada(ctx, &pb.RequestBJ{NJugador: id_jugador, NRonda: num_ronda})
   if err != nil {
         log.Fatalf("%v.ListFeatures(_) = _, %v", c, err)
     }
 
   posicion := 0
-    for {
-        jugada, err := response.Recv()
-        if err == io.EOF {
-            break
-        }
-        if err != nil {
-            log.Fatalf("%v.ListFeatures(_) = _, %v", c, err)
-        }
-        log.Printf("Jugada recibida desde dataNode: %v", jugada.GetJugadas())
+  for {
+    jugada, err := response.Recv()
+    if err == io.EOF || posicion == 4 {
+        break
+    }
+    if err != nil {
+        log.Fatalf("%v.ListFeatures(_) = _, %v", c, err)
+    }
+    //log.Printf("Jugada recibida desde dataNode: %v [%d]", jugada.GetJugadas())
     jugadas[posicion] = int(jugada.GetJugadas())
     posicion++
-    }
+  }
 
   return jugadas
 }

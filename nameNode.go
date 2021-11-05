@@ -29,6 +29,11 @@ var direcciones_dataNode = []string{"localhost", "localhost", "localhost"}
 type CommServer struct {
 	pb.UnimplementedCommServer
 }
+func check(e error) {
+    if e != nil {
+        panic(e)
+    }
+}
 
 func existeArchivo(archivo string) bool {
     info, err := os.Stat(archivo)
@@ -86,7 +91,7 @@ func archivoJugada(n_jugador int, n_ronda int, direccion_dataNode string){
   return
 }
 
-func resetDataNode(string address){
+func resetDataNode(address string){
   coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
   if err != nil {
     log.Fatalf("did not connect: %v", err)
