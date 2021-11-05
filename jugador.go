@@ -87,13 +87,13 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
     
     //Espera del inicio de la siguiente ronda
     if ronda == 4 {
-      respuestaRonda, error := cliente.TerminoRonda(ctx, &pb.RequestRonda{RondaFinal: true, TerminoJuego: false})
+      respuestaRonda, error := cliente.TerminoRonda(ctx, &pb.RequestRonda{Etapa: 1, Ronda: ronda, RondaFinal: true, TerminoJuego: false})
       if error != nil {
         log.Fatalf("Error en la conexión con el servidor: %v", error)
       }
       terminoJuego = respuestaRonda.GetTerminoJuego()
     } else {
-      respuestaRonda, error := cliente.TerminoRonda(ctx, &pb.RequestRonda{RondaFinal: false, TerminoJuego: false})
+      respuestaRonda, error := cliente.TerminoRonda(ctx, &pb.RequestRonda{Etapa: 1, Ronda: ronda, RondaFinal: false, TerminoJuego: false})
       if error != nil {
         log.Fatalf("Error en la conexión con el servidor: %v", error)
       }
@@ -157,7 +157,7 @@ func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   }
 
   //Aviso de termino de ronda y etapa
-  respuestaRonda, err := cliente.TerminoRonda(ctx, &pb.RequestRonda{RondaFinal: true, TerminoJuego: false})
+  respuestaRonda, err := cliente.TerminoRonda(ctx, &pb.RequestRonda{Etapa: 2, Ronda: 1, RondaFinal: true, TerminoJuego: false})
   if err != nil {
     log.Fatalf("Error en la conexión con el servidor: %v", err)
   }
@@ -209,7 +209,7 @@ func juegoEtapa3(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   }
 
   //Aviso de termino de ronda, etapa y juego
-  _, err = cliente.TerminoRonda(ctx, &pb.RequestRonda{RondaFinal: true, TerminoJuego: true})
+  _, err = cliente.TerminoRonda(ctx, &pb.RequestRonda{Etapa: 3, Ronda: 1, RondaFinal: true, TerminoJuego: true})
   if err != nil {
     log.Fatalf("Error en la conexión con el servidor: %v", err)
   }

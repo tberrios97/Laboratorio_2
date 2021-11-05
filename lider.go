@@ -221,33 +221,53 @@ func SolicitarMonto() int32{
 }
 
 //adicional es para agregar el numero del jugador eliminado | el numero de ganadores | numero de etapa
-func menu_prints(adicional int)(){ 
+func menu_prints(etapa int32, ronda int32, esEtapa bool)(){ 
   var opcion int
-  for {
-    log.Printf("[*] ¿Qué acción desea realizar?")
-    log.Printf("[*] (1) Ver jugada.\t (2) Pedir monto acumulado.\t (3) Continuar con el juego.")
-    fmt.Scan(&opcion)
-    if opcion == 1 {
-      log.Printf("[*] Ingrese número de jugador:")
+  if esEtapa {
+    for {
+      log.Printf("[*] ¿Qué acción desea realizar?")
+      log.Printf("[*] (1) Pedir monto acumulado.\t (2) Continuar con la Etapa %d.", etapa)
       fmt.Scan(&opcion)
-      //Pedir jugada
-      log.Printf("[*] Solicitando jugadas del jugador"+strconv.Itoa(opcion)+"...")
-    } else if opcion == 2 {
-      log.Printf("[*] Solicitando el monto total acumulado...")
-      //Solicitar monto acumulado
-      var monto int32 = SolicitarMonto()
-      log.Printf("[*] Monto acumulado %d KRW", monto)
-    } else {
-      if adicional == 1{
-        log.Printf("[*] Comienza la Etapa 1: Luz Roja, Luz Verde")
-      }else if adicional ==2{
-        log.Printf("[*] Comienza la Etapa 2: Tirar la cuerda")
-      }else{
-        log.Printf("[*] Comienza la Etapa 3: Todo o nada")
+      if opcion == 1 {
+        log.Printf("[*] Solicitando el monto total acumulado...")
+        //Solicitar monto acumulado
+        var monto int32 = SolicitarMonto()
+        log.Printf("[*] Monto acumulado %d KRW", monto)
+      } else {
+        if etapa == 1{
+          log.Printf("[*] Comienza la Etapa 1: Luz Roja, Luz Verde")
+        }else if etapa ==2{
+          log.Printf("[*] Comienza la Etapa 2: Tirar la cuerda")
+        }else{
+          log.Printf("[*] Comienza la Etapa 3: Todo o nada")
+        }
+        log.Printf("[*] Esperando jugadas...")
+        break
       }
-      break
+    }
+  } else {
+    for {
+      log.Printf("[*] ¿Qué acción desea realizar?")
+      log.Printf("[*] (1) Ver jugada.\t (2) Pedir monto acumulado.\t (3) Terminar la ronda.")
+      fmt.Scan(&opcion)
+      if opcion == 1 {
+        log.Printf("[*] Ingrese número de jugador:")
+        fmt.Scan(&opcion)
+        //Pedir jugada
+        log.Printf("[*] Solicitando jugadas del jugador "+strconv.Itoa(opcion)+"...")
+      } else if opcion == 2 {
+        log.Printf("[*] Solicitando el monto total acumulado...")
+        //Solicitar monto acumulado
+        var monto int32 = SolicitarMonto()
+        log.Printf("[*] Monto acumulado %d KRW", monto)
+      } else {
+        log.Printf("[*] Terminando ronda %d", ronda)
+        log.Printf("[*] Esperando jugadas...")
+        break
+      }
     }
   }
+  
   /*
   if opcion == 0{ //Inicio
     log.Printf("[*] Bienvenidos al juego del Calamar\n")
@@ -290,7 +310,7 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
 
     //Consola del Líder al inicio de cada Etapa
 
-    menu_prints(int(etapa))
+    menu_prints(etapa, 1, true)
 
     //reset de contadores de los jugadores activos a 0
     resetContadorJugadores()
@@ -364,11 +384,13 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
 func (s *CommServer) TerminoRonda(ctx context.Context, in *pb.RequestRonda) (*pb.ReponseRonda, error){
   comienzoRonda = false
   jugadoresListos ++
+  etapa := in.GetEtapa()
+  ronda := in.GetRonda()
 
   if jugadoresListos == jugadoresActivos && juegoActivo{
     //Consola del Líder despues de cada ronda
 
-    //...
+    menu_prints(etapa, ronda, false)
 
     //Dar comienzo a la siguiente ronda
     comienzoRonda = true

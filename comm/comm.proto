@@ -45,8 +45,10 @@ message RequestEtapa {
 }
 
 message RequestRonda {
-  bool rondaFinal = 1;
-  bool terminoJuego = 2;
+  int32 etapa = 1;
+  int32 ronda = 2;
+  bool rondaFinal = 3;
+  bool terminoJuego = 4;
 }
 
 message RequestPrimeraEtapa {
