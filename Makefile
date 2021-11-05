@@ -8,8 +8,8 @@ dataNode:
 	go run ./dataNode.go
 pozo:
 	go run ./pozo.go
-bots:
-	go run ./jugador.go
+bot:
+	go run ./bot.go
 
 maquina1:
 	go run ./dataNode.go & disown
@@ -39,20 +39,3 @@ jugadores:
 	go run ./bot.go &
 	go run ./bot.go &
 	go run ./jugador.go
-
-bots:
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
-	go run ./bot.go &
