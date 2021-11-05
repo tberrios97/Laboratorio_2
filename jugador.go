@@ -88,6 +88,13 @@ func menu_prints(esEtapa bool, etapa int, cliente pb.CommClient, ctx context.Con
       }
     }
   }
+
+  fmt.Println("\n")
+  printSeparador()
+  printSeparador()
+  printSeparador()
+  fmt.Println("\n")
+
   return
 }
 
@@ -114,7 +121,9 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   for ronda = 1; ronda <= 4; ronda ++{
 
     //Comprobar que el jugador no haya ganada ya la etapa
+    fmt.Println("")
     printSeparador()
+    fmt.Println("")
     fmt.Print("[*] Ronda ", ronda, ".\n[*] Realice su jugada: ")
     if !ganador {
       //Lectura de la jugada en cada ronda, hasta un máximo de 4
@@ -276,7 +285,6 @@ func juegoEtapa3(cliente pb.CommClient, ctx context.Context, numeroJugador int32
 }
 
 func main(){
-  var pozo int
   var input int
   var jugando bool
   var terminoJuego bool
@@ -340,7 +348,13 @@ func main(){
 
     //Verificar si ya solo queda un único jugador
     if terminoJuego {
-      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", 0, "KRW")
+      respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+      if err != nil {
+        log.Fatalf("Error en la conexión con el servidor: %v", err)
+      }
+
+      var monto int32 = respuesta.GetMonto()
+      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", monto, "KRW")
       fmt.Println("[*] Finalizando programa de SquidGame.")
       return
     }
@@ -368,7 +382,13 @@ func main(){
 
     //Verificar si ya solo queda un único jugador
     if terminoJuego {
-      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", 0, "KRW")
+      respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+      if err != nil {
+        log.Fatalf("Error en la conexión con el servidor: %v", err)
+      }
+
+      var monto int32 = respuesta.GetMonto()
+      fmt.Println("[*] Felicitaciones jugador " + strconv.Itoa(int(numeroJugador)) + ", has gando el Juego del Calamar.\n[*] Has ganado", monto, "KRW")
       fmt.Println("[*] Finalizando programa de SquidGame.")
       return
     }
@@ -392,9 +412,13 @@ func main(){
       fmt.Println("[*] Has sido eliminado\n[*] Finalizando programa de SquidGame.")
       return
     }
+    respuestaMonto, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+    if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
 
-    pozo = 100
-    fmt.Println("[*] Feliciticaciones, has sido uno de los ganadores.\n[*] Has ganado", pozo, "KRW")
+    var monto int32 = respuestaMonto.GetMonto()
+    fmt.Println("[*] Feliciticaciones, has sido uno de los ganadores.\n[*] Has ganado", monto, "KRW")
 
   }
   //Cerrar programa
