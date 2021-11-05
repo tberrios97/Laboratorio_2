@@ -39,6 +39,7 @@ message RequestUnirse {
 
 message RequestEtapa {
   int32 etapa = 1;
+  int32 numeroJugador = 2;
 }
 
 message RequestRonda {

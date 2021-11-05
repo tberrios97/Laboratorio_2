@@ -27,10 +27,11 @@ var juegoActivo bool = false
 var comienzoEtapa bool = false
 var comienzoRonda bool = false
 var jugadasRecolectadas bool = false
-var bloqueo bool = false
 
 //
 var contadorJugadaJugador [capacidadJugadores]int32
+var conteoEquipo1 int32
+var conteoEquipo2 int32
 var jugadaLider int32
 
 type CommServer struct {
@@ -39,6 +40,31 @@ type CommServer struct {
 
 func random(min, max int) int32 {
   return int32(rand.Intn(max-min+1) + min)
+}
+
+func elegirJugadorRandomActivo() int32{
+  var posicion int32
+  for {
+    posicion = random(1, capacidadJugadores)
+    if contadorJugadaJugador[posicion - 1] != -1 {
+      return posicion
+    }
+  }
+}
+
+func elegirEquipos() {
+  var cantidad int = int(jugadoresActivos/2)
+  var count int = 0
+  for i := 0; i < capacidadJugadores; i++ {
+    if contadorJugadaJugador[i] != -1 {
+      if count < cantidad {
+        contadorJugadaJugador[i] = 1
+      } else {
+        contadorJugadaJugador[i] = 2
+      }
+      count ++
+    }
+  }
 }
 
 func resetContadorJugadores() (){
@@ -68,8 +94,8 @@ func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirs
 
 func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.ResponseEtapa, error){
   var input int
-  var etapa int = GetEtapa()
-  bloqueo = false
+  var etapa int32 = in.GetEtapa()
+  var numeroJugador = in.GetNumeroJugador()
   comienzoEtapa = false
   jugadoresListos ++
 
@@ -81,31 +107,49 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
     }else {
       log.Printf("[*] No")
     }
+    
+    //reset de contadores de los jugadores activos a 0
+    resetContadorJugadores()
+
+    //Etapa 2. Verificar paridad de jugadores y asignar equipos.
+    if etapa == 2 {
+      //Verificar si hay jugadores impares
+      if jugadoresActivos % 2 == 1 {
+        //Eliminar jugador al azar
+        jugadorRandom := elegirJugadorRandomActivo()
+        contadorJugadaJugador[jugadorRandom - 1] = -1
+        jugadoresActivos --
+      }
+      //Crear equipos
+      elegirEquipos()
+    }
+
+    //Setear variables para ejecutar la siguiente etapa
     comienzoEtapa = true
     jugadoresListos = 0
-    resetContadorJugadores()
   }
 
   for {
-    if comienzoEtapa {
 
+    if comienzoEtapa {
       //Manejo de Etapas
-      //Etapa 1. No hay manipulación extra
-      if etapa == 1 {
+      if etapa == 1 { 
+        //Etapa 1. No hay manipulación extra
         if jugadoresActivos == 1{
           return &pb.ResponseEtapa{Body: 1, TerminoJuego: true}, nil
         } else {
           return &pb.ResponseEtapa{Body: 1, TerminoJuego: false}, nil
         }
-      } 
-      //Etapa 2. Verificar paridad de jugadores y asignar equipos.
-      else if etapa == 2 {
+      } else if etapa == 2 { 
+        //Etapa 2. Verificar paridad de jugadores y asignar equipos.
         var terminoJuego bool
+        var body int32 = contadorJugadaJugador[numeroJugador - 1]
         if jugadoresActivos == 1 {
           terminoJuego = true
         } else {
           terminoJuego = false
         }
+        return &pb.ResponseEtapa{Body: body, TerminoJuego: terminoJuego}, nil
       }
     }
   }
@@ -113,7 +157,6 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
 
 func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.ReponseRonda, error){
   var input int
-  bloqueo = false
   comienzoRonda = false
   jugadoresListos ++
 
@@ -147,7 +190,6 @@ func (s *CommServer) InicioRonda(ctx context.Context, in *pb.RequestRonda) (*pb.
 }
 
 func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrimeraEtapa) (*pb.ResponsePrimeraEtapa, error) {
-  bloqueo = false
   jugadasRecolectadas = false
   jugadoresListos ++
 
@@ -203,6 +245,12 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
 
     }
   }
+}
+
+func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegundaEtapa) (*pb.ResponseSegundaEtapa, error) {
+  jugada := in.GetJugada()
+  jugador := in.GetJugador()
+
 }
 
 func failOnError(err error, msg string) {

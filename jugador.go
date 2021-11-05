@@ -56,7 +56,7 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
 
   //Esperar a la respuesta del servidor para iniciar la etapa
   fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
-  _, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 1})
+  _, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 1, NumeroJugador: numeroJugador})
   if err != nil {
     log.Fatalf("Error en la conexión con el servidor: %v", err)
   }
@@ -121,13 +121,13 @@ func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32
 
   //Esperando respuesta del servidor para iniciar la etapa
   fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
-  respuesta, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 2})
+  respuesta, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 2, NumeroJugador: numeroJugador})
   if err != nil {
     log.Fatalf("Error en la conexión con el servidor: %v", err)
   }
 
   equipo = respuesta.GetBody()
-  if equipo == 3{
+  if equipo == -1{
     jugando = false
     fmt.Println("[*] Lo sentimos, has sido eliminado al azar.\n[*] Gracias por jugar.") 
     return jugando
@@ -267,7 +267,7 @@ func main(){
 
     //Esperando respuesta del servidor para iniciar la etapa
     fmt.Println("[*] Esperando inicio de la etapa por parte del servidor...")
-    respuestaEtapa, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 3})
+    respuestaEtapa, err := cliente.InicioEtapa(ctx, &pb.RequestEtapa{Etapa: 3, NumeroJugador: numeroJugador})
     if err != nil {
       log.Fatalf("Error en la conexión con el servidor: %v", err)
     }
