@@ -155,7 +155,7 @@ func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirs
       log.Printf("[*] Comienzo del Juego del Calamar.")
       juegoActivo = true
     }
-    
+
     return &pb.ResponseUnirse{NumeroJugador: jugadoresActivos}, nil
   }
 }
@@ -167,11 +167,11 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
   jugadoresListos ++
 
   if jugadoresListos == jugadoresActivos && juegoActivo{
-    
+
     //Consola del Líder al inicio de cada Etapa
 
     //...
-    
+
     //reset de contadores de los jugadores activos a 0
     resetContadorJugadores()
 
@@ -209,14 +209,14 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
 
     if comienzoEtapa {
       //Manejo de Etapas
-      if etapa == 1 { 
+      if etapa == 1 {
         //Etapa 1. No hay manipulación extra
         if jugadoresActivos == 1{
           return &pb.ResponseEtapa{Body: 1, TerminoJuego: true}, nil
         } else {
           return &pb.ResponseEtapa{Body: 1, TerminoJuego: false}, nil
         }
-      } else if etapa == 2 { 
+      } else if etapa == 2 {
         //Etapa 2. Devolver equipo del jugador
         var terminoJuego bool
         var body int32 = contadorJugadaJugador[numeroJugador - 1]
@@ -327,7 +327,7 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
       //Si un jugador logra llegar a los 21, gana
       if contadorJugadaJugador[jugador - 1] >= 21{
         return &pb.ResponsePrimeraEtapa{Estado: true, Ganador: true}, nil
-      } 
+      }
 
       //Ronda final
       if ronda == 4 {
@@ -353,7 +353,7 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
 
 func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegundaEtapa) (*pb.ResponseSegundaEtapa, error) {
   jugadasRecolectadas = false
-  
+
   jugada := in.GetJugada()
   jugador := in.GetJugador()
 
@@ -369,7 +369,7 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
   if jugadoresListos == jugadoresActivos && juegoActivo{
     jugadoresListos = 0
     jugadaLider = random(1, 4)
-    
+
     //Verificar que equipo gano, en el caso
     if conteoEquipo1%2 == jugadaLider%2 && conteoEquipo2%2 == jugadaLider%2 {
       //Caso en que ambos equipos hayan ganado
@@ -421,7 +421,7 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
 
 func (s *CommServer) JugadaTerceraEtapa(ctx context.Context, in *pb.RequestTerceraEtapa) (*pb.ResponseTerceraEtapa, error) {
   jugadasRecolectadas = false
-  
+
   jugada := in.GetJugada()
   jugador := in.GetJugador()
 
@@ -484,6 +484,41 @@ func SolicitarMonto() int32{
       log.Fatalf("Error en la conexión con el servidor: %v", err)
     }
   return response.GetMontoAcumulado()
+}
+
+func buscar_jugada_nameNode(id_jugador int32, num_ronda int32, direccion_nameNode string) [4]int{
+  var jugadas [4]int
+  conn, err := grpc.Dial(direccion_nameNode, grpc.WithInsecure(), grpc.WithBlock())
+    if err != nil {
+        log.Fatalf("No se pudo lograr conexión: %v", err)
+    }
+    defer conn.Close()
+
+    c := pb.NewCommClient(conn)
+
+    ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+    defer cancel()
+
+    response, err := c.BuscarJugada(ctx, &pb.RequestBJ{NJugador: id_jugador, NRonda: num_ronda})
+  if err != nil {
+        log.Fatalf("%v.ListFeatures(_) = _, %v", c, err)
+    }
+
+  posicion := 0
+    for {
+        jugada, err := response.Recv()
+        if err == io.EOF {
+            break
+        }
+        if err != nil {
+            log.Fatalf("%v.ListFeatures(_) = _, %v", c, err)
+        }
+        log.Printf("Jugada recibida desde dataNode: %v", jugada.GetJugadas())
+    jugadas[posicion] = int(jugada.GetJugadas())
+    posicion++
+    }
+
+  return jugadas
 }
 
 func registrar_jugada_nameNode(id_jugador int32, num_ronda int32, jugada int32, direccion_nameNode string) string{
@@ -563,18 +598,18 @@ func menu_prints(opcion int, adicional int)(){ //adicional es para agregar el nu
   }else if opcion == 3{ //Ganadores
     if adicional > 1{
       fmt.Println("[*] El juego ha finalizado, tenemos %d ganadores!\n",adicional)
-      fmt.Println("[*] Felicidades! han ganado el Juego del Calamar\n") 
+      fmt.Println("[*] Felicidades! han ganado el Juego del Calamar\n")
     }else{
       fmt.Println("[*] El juego ha finalizado, tenemos un ganador!\n")
       fmt.Println("[*] Felicidades! has ganado el Juego del Calamar\n")
     }
   }else if opcion ==4{ //Inicio etapa
     if adicional == 1{
-      fmt.Println("[*] Comienza la Etapa 1: Luz Roja, Luz Verde\n") 
+      fmt.Println("[*] Comienza la Etapa 1: Luz Roja, Luz Verde\n")
     }else if adicional ==2{
-      fmt.Println("[*] Comienza la Etapa 2: Tirar la cuerda\n") 
+      fmt.Println("[*] Comienza la Etapa 2: Tirar la cuerda\n")
     }else{
-      fmt.Println("[*] Comienza la Etapa 3: Todo o nada\n") 
+      fmt.Println("[*] Comienza la Etapa 3: Todo o nada\n")
     }
   }else if opcion ==5{ //Pedir jugadas
     log.Printf("[*] Solicitando jugadas del jugador"+strconv.Itoa(adicional)+"...\n")
