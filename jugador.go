@@ -43,12 +43,63 @@ func intermedio(etapa string){
   }
 }
 
+func menu_prints(esEtapa bool, etapa int, cliente pb.CommClient, ctx context.Context){
+  var opcion int
+  if esEtapa {
+    for {
+      fmt.Println("[*] ¿Qué acción desea realizar?")
+      fmt.Println("[*] (1) Pedir monto acumulado.\t (2) Pedir acceso a la Etapa", etapa)
+      fmt.Print("[*] Respuesta: ")
+      fmt.Scan(&opcion)
+      if opcion == 1 {
+        fmt.Printf("[*] Solicitando el monto total acumulado...")
+        //Solicitar monto acumulado
+
+        respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+        if err != nil {
+          log.Fatalf("Error en la conexión con el servidor: %v", err)
+        }
+
+        var monto int32 = respuesta.GetMonto()
+        fmt.Printf("[*] Monto acumulado", monto, "KRW")
+      } else {
+        break
+      }
+    }
+  } else {
+    for {
+      fmt.Println("[*] ¿Qué acción desea realizar?")
+      fmt.Println("[*] (1) Pedir monto acumulado.\t (2) Continuar con la siguiente ronda.")
+      fmt.Print("[*] Respuesta: ")
+      fmt.Scan(&opcion)
+      if opcion == 1 {
+        fmt.Printf("[*] Solicitando el monto total acumulado...")
+        //Solicitar monto acumulado
+
+        respuesta, err := cliente.PedirMonto(ctx, &pb.RequestPedirMonto{Body: 1})
+        if err != nil {
+          log.Fatalf("Error en la conexión con el servidor: %v", err)
+        }
+
+        var monto int32 = respuesta.GetMonto()
+        fmt.Printf("[*] Monto acumulado", monto, "KRW")
+      } else {
+        break
+      }
+    }
+  }
+  return
+}
+
 func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32) (bool, bool){
   var jugada int32
   var estado bool
   var ganador bool
   var terminoJuego bool
   var ronda int32 = 1
+
+  menu_prints(true, 1, cliente, ctx)
+
   fmt.Println("[*] Comenzando primera etapa. Próximo juego:")
   fmt.Println("[*] || Juego Luz Roja, Luz Verde ||")
 
@@ -61,7 +112,9 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
 
   fmt.Println("[*] Para jugar debes elegir un número entre 1 y 10.")
   for ronda = 1; ronda <= 4; ronda ++{
+
     //Comprobar que el jugador no haya ganada ya la etapa
+    printSeparador()
     fmt.Print("[*] Ronda ", ronda, ".\n[*] Realice su jugada: ")
     if !ganador {
       //Lectura de la jugada en cada ronda, hasta un máximo de 4
@@ -106,7 +159,6 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
       //fmt.Println("[*] Juego Terminado, has ganado")
       return ganador, terminoJuego
     }
-    printSeparador()
   }
   
   return ganador, terminoJuego
@@ -118,6 +170,9 @@ func juegoEtapa2(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   var estado bool
   var terminoJuego bool
   jugando := true
+
+  menu_prints(true, 2, cliente, ctx)
+
   fmt.Println("[*] Comenzado segunda etapa. Próximo juego")
   fmt.Println("[*] || Juego Tirar la Cuerda ||")
 
@@ -171,6 +226,9 @@ func juegoEtapa3(cliente pb.CommClient, ctx context.Context, numeroJugador int32
   var contrincante int32
   var estado bool
   jugando := true
+
+  menu_prints(true, 3, cliente, ctx)
+
   fmt.Println("[*] Comenzado última etapa.")
   fmt.Println("[*] || Juego Todo o Nada ||")
   //Realizar petición para entrar en la etapa.

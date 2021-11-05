@@ -643,6 +643,11 @@ func (s *CommServer) JugadaTerceraEtapa(ctx context.Context, in *pb.RequestTerce
 
 }
 
+func (s *CommServer) PedirMonto(ctx context.Context, in *pb.RequestPedirMonto) (*pb.ResponsePedirMonto, error) {
+  var monto int32 = SolicitarMonto()
+  return &pb.ResponsePedirMonto{Monto: monto}, nil
+}
+
 func buscar_jugada_nameNode(id_jugador int32, num_ronda int32, direccion_nameNode string) [4]int{
   var jugadas [4]int
   conn, err := grpc.Dial(direccion_nameNode, grpc.WithInsecure(), grpc.WithBlock())
