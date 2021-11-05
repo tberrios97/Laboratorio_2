@@ -90,6 +90,21 @@ func check(e error) {
         panic(e)
     }
 }
+
+func resetDataNode(){
+	for n_jugador := 1; n_jugador <= 16; n_jugador++ {
+		for n_ronda := 1; n_ronda <= 3; n_ronda++ {
+			nombre_archivo := "jugador_" + strconv.Itoa(n_jugador) + "__ronda_" + strconv.Itoa(n_ronda)+".txt"
+			if (existeArchivo(nombre_archivo)){
+				err := os.Remove(nombre_archivo)
+				check(err)
+			}
+		}
+	}
+
+	return
+}
+
 func (s *CommServer) ReiniciarPartida(ctx context.Context, in *pb.RequestTest) (*pb.ResponseTest, error){
 	for n_jugador := 1; n_jugador <= 16; n_jugador++ {
 		for n_ronda := 1; n_ronda <= 3; n_ronda++ {
@@ -134,7 +149,8 @@ func (s *CommServer) RegistrarJugadaDN(ctx context.Context, in *pb.RequestRJDN) 
 }
 
 func main() {
-
+	resetDataNode()
+	
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("fallo el escuchar: %v", err)

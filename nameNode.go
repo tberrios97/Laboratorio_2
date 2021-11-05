@@ -91,6 +91,16 @@ func archivoJugada(n_jugador int, n_ronda int, direccion_dataNode string){
   return
 }
 
+func resetNameNode(){
+	nombre_archivo:="registro_jugadas.txt"
+	if (existeArchivo(nombre_archivo)){
+		err := os.Remove(nombre_archivo)
+		check(err)
+	}
+
+	return
+}
+
 func resetDataNode(address string){
   coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
   if err != nil {
@@ -195,7 +205,7 @@ func (s *CommServer) RegistrarJugadaJugador(ctx context.Context, in *pb.RequestR
 
 func main() {
 	resetNameNode()
-	
+
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("fallo el escuchar: %v", err)
