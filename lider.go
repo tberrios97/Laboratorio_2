@@ -1,6 +1,7 @@
 package main
 
 import (
+  "io"
   "net"
   "encoding/json"
   "log"
@@ -59,6 +60,22 @@ func mostrarJugadoresVivos(){
   }
 }
 
+func resetPozo(){
+  coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+  if err != nil {
+    log.Fatalf("did not connect: %v", err)
+  }
+  defer coneccion.Close()
+  cliente := pb.NewCommClient(coneccion)
+  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  defer cancel()
+  _, err = cliente.ReiniciarPartida(ctx, &pb.RequestTest{Body: "hola jorge :D"}) 
+  if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
+  return
+}
+
 func resetPartida() {
   jugadoresActivos = 0
   jugadoresListos = 0
@@ -73,6 +90,7 @@ func resetPartida() {
   for i := 0; i < capacidadJugadores; i++ {
     contadorJugadaJugador[i] = 0
   }
+  resetPozo()
 }
 
 func abs(number int32) int32 {
@@ -139,6 +157,108 @@ func resetContadorJugadores() (){
   return
 }
 
+type jugador_eliminado struct {
+  Jugador int `json: jugador`
+  Ronda int `json: ronda`
+}
+
+func failOnError(err error, msg string) {
+  if err != nil {
+    log.Fatalf("%s: %s", msg, err)
+  }
+}
+
+func informar_jugador_eliminado(id_jugador int, ronda int){
+  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+  failOnError(err, "Failed to connect to RabbitMQ")
+  defer conn.Close()
+  ch, err := conn.Channel()
+  failOnError(err, "Failed to open a channel")
+  defer ch.Close()
+
+  q, err := ch.QueueDeclare(
+    "cola RabbitMQ", // name
+    false,   // durable
+    false,   // delete when unused
+    false,   // exclusive
+    false,   // no-wait
+    nil,     // arguments
+  )
+  failOnError(err, "Failed to declare a queue")
+
+  data := jugador_eliminado{
+    Jugador: id_jugador,
+    Ronda: ronda,
+  }
+  dataBytes,err := json.Marshal(data)
+  err = ch.Publish(
+    "",     // exchange
+    q.Name, // routing key
+    false,  // mandatory
+    false,  // immediate
+    amqp.Publishing{
+      ContentType: "text/plain",
+      Body:        dataBytes,
+    })
+  failOnError(err, "Failed to publish a message")
+  log.Printf("[*] Jugador eliminado informado al pozo")
+}
+
+func SolicitarMonto() int32{
+  coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+  if err != nil {
+    log.Fatalf("did not connect: %v", err)
+  }
+  defer coneccion.Close()
+  cliente := pb.NewCommClient(coneccion)
+  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  defer cancel()
+  response, err := cliente.SolicitarMonto(ctx, &pb.RequestMonto{MontoAcumulado: int32(1)}) //Revisar
+  if err != nil {
+      log.Fatalf("Error en la conexión con el servidor: %v", err)
+    }
+  return response.GetMontoAcumulado()
+}
+
+//adicional es para agregar el numero del jugador eliminado | el numero de ganadores | numero de etapa
+func menu_prints(adicional int)(){ 
+  var opcion int
+  for {
+    log.Printf("[*] ¿Qué acción desea realizar?")
+    log.Printf("[*] (1) Ver jugada.\t (2) Pedir monto acumulado.\t (3) Continuar con el juego.")
+    fmt.Scan(&opcion)
+    if opcion == 1 {
+      log.Printf("[*] Ingrese número de jugador:")
+      fmt.Scan(&opcion)
+      //Pedir jugada
+      log.Printf("[*] Solicitando jugadas del jugador"+strconv.Itoa(opcion)+"...")
+    } else if opcion == 2 {
+      log.Printf("[*] Solicitando el monto total acumulado...")
+      //Solicitar monto acumulado
+      var monto int32 = SolicitarMonto()
+      log.Printf("[*] Monto acumulado %d KRW", monto)
+    } else {
+      if adicional == 1{
+        log.Printf("[*] Comienza la Etapa 1: Luz Roja, Luz Verde")
+      }else if adicional ==2{
+        log.Printf("[*] Comienza la Etapa 2: Tirar la cuerda")
+      }else{
+        log.Printf("[*] Comienza la Etapa 3: Todo o nada")
+      }
+      break
+    }
+  }
+  /*
+  if opcion == 0{ //Inicio
+    log.Printf("[*] Bienvenidos al juego del Calamar\n")
+    log.Printf("[*] Esperando jugadores...\n")
+
+  }
+  */
+  return
+}
+
+
 func (s *CommServer) UnirseJuegoCalamar(ctx context.Context, in *pb.RequestUnirse) (*pb.ResponseUnirse, error){
   log.Printf("[*] Petición de unirse al juego del calamar recibida.")
   if juegoActivo || jugadoresActivos >= capacidadJugadores{
@@ -170,7 +290,7 @@ func (s *CommServer) InicioEtapa(ctx context.Context, in *pb.RequestEtapa) (*pb.
 
     //Consola del Líder al inicio de cada Etapa
 
-    //...
+    menu_prints(int(etapa))
 
     //reset de contadores de los jugadores activos a 0
     resetContadorJugadores()
@@ -266,6 +386,7 @@ func (s *CommServer) TerminoRonda(ctx context.Context, in *pb.RequestRonda) (*pb
       return &pb.ReponseRonda{Body: 1, TerminoJuego: true}, nil
     } else {
       if in.GetRondaFinal() {
+        log.Printf("[*] Termino de la Etapa")
         mostrarJugadoresVivos()
         resetContadorJugadores()
       }
@@ -307,7 +428,7 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
     jugadoresListos = 0
     jugadaLider = random(6, 10)
     jugadasRecolectadas = true
-    log.Printf("[*] Jugada del lider: %d", jugadaLider)
+    log.Printf("[*] Etapa 1 Ronda %d Jugada del lider: %d ", ronda, jugadaLider)
   }
 
   for {
@@ -321,6 +442,8 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
         jugadoresActivos --
         contadorJugadaJugador[jugador - 1] = -1
         log.Printf("[*] Jugador %d eliminado.", jugador)
+        //Mandar al pozo la eliminación del jugador
+        informar_jugador_eliminado(int(jugador), 1)
         return &pb.ResponsePrimeraEtapa{Estado: false, Ganador: false}, nil
       }
 
@@ -340,6 +463,8 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
           jugadoresActivos --
           contadorJugadaJugador[jugador - 1] = -1
           log.Printf("[*] Jugador %d eliminado.", jugador)
+          //Mandar al pozo la eliminación del jugador
+          informar_jugador_eliminado(int(jugador), 1)
           return &pb.ResponsePrimeraEtapa{Estado: false, Ganador: false}, nil
         }
       } else {
@@ -395,7 +520,7 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
     }
 
     jugadasRecolectadas = true
-    log.Printf("[*] Jugada del lider: %d", jugadaLider)
+    log.Printf("[*] Etapa 2 Ronda 1 Jugada del lider: %d", jugadaLider)
   }
 
   for {
@@ -411,6 +536,8 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
         } else {
           contadorJugadaJugador[jugador - 1] = -1
           log.Printf("[*] Jugador %d eliminado.", jugador)
+          //Mandar al pozo la eliminación del jugador
+          informar_jugador_eliminado(int(jugador), 2)
           return &pb.ResponseSegundaEtapa{Estado: false}, nil
         }
       }
@@ -457,33 +584,13 @@ func (s *CommServer) JugadaTerceraEtapa(ctx context.Context, in *pb.RequestTerce
         jugadoresActivos --
         contadorJugadaJugador[jugador - 1] = -1
         log.Printf("[*] Jugador %d eliminado.", jugador)
+        //Mandar al pozo la eliminación del jugador
+        informar_jugador_eliminado(int(jugador), 3)
         return &pb.ResponseTerceraEtapa{Estado: false}, nil
       }
     }
   }
 
-}
-
-func failOnError(err error, msg string) {
-  if err != nil {
-    log.Fatalf("%s: %s", msg, err)
-  }
-}
-
-func SolicitarMonto() int32{
-  coneccion, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
-  if err != nil {
-    log.Fatalf("did not connect: %v", err)
-  }
-  defer coneccion.Close()
-  cliente := pb.NewCommClient(coneccion)
-  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-  defer cancel()
-  response, err := cliente.SolicitarMonto(ctx, &pb.RequestMonto{MontoAcumulado: int32(1)}) //Revisar
-  if err != nil {
-      log.Fatalf("Error en la conexión con el servidor: %v", err)
-    }
-  return response.GetMontoAcumulado()
 }
 
 func buscar_jugada_nameNode(id_jugador int32, num_ronda int32, direccion_nameNode string) [4]int{
@@ -539,82 +646,6 @@ func registrar_jugada_nameNode(id_jugador int32, num_ronda int32, jugada int32, 
   }
   log.Printf("Response desde Data Node: %v", response.Body)
   return response.Body
-}
-
-type jugador_eliminado struct {
-  Jugador int `json: jugador`
-  Ronda int `json: ronda`
-}
-
-func informar_jugador_eliminado(id_jugador int, ronda int){
-  conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-  failOnError(err, "Failed to connect to RabbitMQ")
-  defer conn.Close()
-  ch, err := conn.Channel()
-  failOnError(err, "Failed to open a channel")
-  defer ch.Close()
-
-  q, err := ch.QueueDeclare(
-    "cola RabbitMQ", // name
-    false,   // durable
-    false,   // delete when unused
-    false,   // exclusive
-    false,   // no-wait
-    nil,     // arguments
-  )
-  failOnError(err, "Failed to declare a queue")
-
-  data := jugador_eliminado{
-    Jugador: id_jugador,
-    Ronda: ronda,
-  }
-  dataBytes,err := json.Marshal(data)
-  err = ch.Publish(
-    "",     // exchange
-    q.Name, // routing key
-    false,  // mandatory
-    false,  // immediate
-    amqp.Publishing{
-      ContentType: "text/plain",
-      Body:        dataBytes,
-    })
-  failOnError(err, "Failed to publish a message")
-  log.Printf("[*] Jugador eliminado informado al pozo")
-}
-
-func menu_prints(opcion int, adicional int)(){ //adicional es para agregar el numero del jugador eliminado | el numero de ganadores | numero de etapa
-  if opcion == 0{ //Inicio
-    log.Printf("[*] Bienvenidos al juego del Calamar\n")
-    log.Printf("[*] Esperando jugadores...\n")
-
-  }else if opcion == 1{ //Jugador eliminado
-    log.Printf("[*] Jugador"+strconv.Itoa(adicional)+"eliminado\n")
-    log.Printf("[*] %d jugadores restantes\n", jugadoresActivos)
-
-  }else if opcion == 2{ //Pedir monto acumulado
-    log.Printf("[*] Solicitando el monto total acumulado...\n")
-    SolicitarMonto()
-
-  }else if opcion == 3{ //Ganadores
-    if adicional > 1{
-      fmt.Println("[*] El juego ha finalizado, tenemos %d ganadores!\n",adicional)
-      fmt.Println("[*] Felicidades! han ganado el Juego del Calamar\n")
-    }else{
-      fmt.Println("[*] El juego ha finalizado, tenemos un ganador!\n")
-      fmt.Println("[*] Felicidades! has ganado el Juego del Calamar\n")
-    }
-  }else if opcion ==4{ //Inicio etapa
-    if adicional == 1{
-      fmt.Println("[*] Comienza la Etapa 1: Luz Roja, Luz Verde\n")
-    }else if adicional ==2{
-      fmt.Println("[*] Comienza la Etapa 2: Tirar la cuerda\n")
-    }else{
-      fmt.Println("[*] Comienza la Etapa 3: Todo o nada\n")
-    }
-  }else if opcion ==5{ //Pedir jugadas
-    log.Printf("[*] Solicitando jugadas del jugador"+strconv.Itoa(adicional)+"...\n")
-  }
-  return
 }
 
 func main(){

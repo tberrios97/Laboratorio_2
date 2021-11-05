@@ -25,11 +25,13 @@ type CommClient interface {
 	JugadaPrimeraEtapa(ctx context.Context, in *RequestPrimeraEtapa, opts ...grpc.CallOption) (*ResponsePrimeraEtapa, error)
 	JugadaSegundaEtapa(ctx context.Context, in *RequestSegundaEtapa, opts ...grpc.CallOption) (*ResponseSegundaEtapa, error)
 	JugadaTerceraEtapa(ctx context.Context, in *RequestTerceraEtapa, opts ...grpc.CallOption) (*ResponseTerceraEtapa, error)
+	PedirMonto(ctx context.Context, in *RequestPedirMonto, opts ...grpc.CallOption) (*ResponsePedirMonto, error)
 	RegistrarJugadaJugador(ctx context.Context, in *RequestRJJ, opts ...grpc.CallOption) (*ResponseRJJ, error)
 	RegistrarJugadaDN(ctx context.Context, in *RequestRJDN, opts ...grpc.CallOption) (*ResponseRJDN, error)
 	BuscarJugada(ctx context.Context, in *RequestBJ, opts ...grpc.CallOption) (Comm_BuscarJugadaClient, error)
 	ObtenerJugada(ctx context.Context, in *RequestOJ, opts ...grpc.CallOption) (Comm_ObtenerJugadaClient, error)
 	SolicitarMonto(ctx context.Context, in *RequestMonto, opts ...grpc.CallOption) (*ResponseMonto, error)
+	ReiniciarPartida(ctx context.Context, in *RequestTest, opts ...grpc.CallOption) (*ResponseTest, error)
 }
 
 type commClient struct {
@@ -97,6 +99,15 @@ func (c *commClient) JugadaSegundaEtapa(ctx context.Context, in *RequestSegundaE
 func (c *commClient) JugadaTerceraEtapa(ctx context.Context, in *RequestTerceraEtapa, opts ...grpc.CallOption) (*ResponseTerceraEtapa, error) {
 	out := new(ResponseTerceraEtapa)
 	err := c.cc.Invoke(ctx, "/comm.Comm/JugadaTerceraEtapa", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *commClient) PedirMonto(ctx context.Context, in *RequestPedirMonto, opts ...grpc.CallOption) (*ResponsePedirMonto, error) {
+	out := new(ResponsePedirMonto)
+	err := c.cc.Invoke(ctx, "/comm.Comm/PedirMonto", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +205,15 @@ func (c *commClient) SolicitarMonto(ctx context.Context, in *RequestMonto, opts 
 	return out, nil
 }
 
+func (c *commClient) ReiniciarPartida(ctx context.Context, in *RequestTest, opts ...grpc.CallOption) (*ResponseTest, error) {
+	out := new(ResponseTest)
+	err := c.cc.Invoke(ctx, "/comm.Comm/ReiniciarPartida", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CommServer is the server API for Comm service.
 // All implementations must embed UnimplementedCommServer
 // for forward compatibility
@@ -205,11 +225,13 @@ type CommServer interface {
 	JugadaPrimeraEtapa(context.Context, *RequestPrimeraEtapa) (*ResponsePrimeraEtapa, error)
 	JugadaSegundaEtapa(context.Context, *RequestSegundaEtapa) (*ResponseSegundaEtapa, error)
 	JugadaTerceraEtapa(context.Context, *RequestTerceraEtapa) (*ResponseTerceraEtapa, error)
+	PedirMonto(context.Context, *RequestPedirMonto) (*ResponsePedirMonto, error)
 	RegistrarJugadaJugador(context.Context, *RequestRJJ) (*ResponseRJJ, error)
 	RegistrarJugadaDN(context.Context, *RequestRJDN) (*ResponseRJDN, error)
 	BuscarJugada(*RequestBJ, Comm_BuscarJugadaServer) error
 	ObtenerJugada(*RequestOJ, Comm_ObtenerJugadaServer) error
 	SolicitarMonto(context.Context, *RequestMonto) (*ResponseMonto, error)
+	ReiniciarPartida(context.Context, *RequestTest) (*ResponseTest, error)
 	mustEmbedUnimplementedCommServer()
 }
 
@@ -238,6 +260,9 @@ func (UnimplementedCommServer) JugadaSegundaEtapa(context.Context, *RequestSegun
 func (UnimplementedCommServer) JugadaTerceraEtapa(context.Context, *RequestTerceraEtapa) (*ResponseTerceraEtapa, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JugadaTerceraEtapa not implemented")
 }
+func (UnimplementedCommServer) PedirMonto(context.Context, *RequestPedirMonto) (*ResponsePedirMonto, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PedirMonto not implemented")
+}
 func (UnimplementedCommServer) RegistrarJugadaJugador(context.Context, *RequestRJJ) (*ResponseRJJ, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegistrarJugadaJugador not implemented")
 }
@@ -252,6 +277,9 @@ func (UnimplementedCommServer) ObtenerJugada(*RequestOJ, Comm_ObtenerJugadaServe
 }
 func (UnimplementedCommServer) SolicitarMonto(context.Context, *RequestMonto) (*ResponseMonto, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SolicitarMonto not implemented")
+}
+func (UnimplementedCommServer) ReiniciarPartida(context.Context, *RequestTest) (*ResponseTest, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReiniciarPartida not implemented")
 }
 func (UnimplementedCommServer) mustEmbedUnimplementedCommServer() {}
 
@@ -392,6 +420,24 @@ func _Comm_JugadaTerceraEtapa_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Comm_PedirMonto_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestPedirMonto)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommServer).PedirMonto(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/comm.Comm/PedirMonto",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommServer).PedirMonto(ctx, req.(*RequestPedirMonto))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Comm_RegistrarJugadaJugador_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RequestRJJ)
 	if err := dec(in); err != nil {
@@ -488,6 +534,24 @@ func _Comm_SolicitarMonto_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Comm_ReiniciarPartida_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RequestTest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CommServer).ReiniciarPartida(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/comm.Comm/ReiniciarPartida",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CommServer).ReiniciarPartida(ctx, req.(*RequestTest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Comm_ServiceDesc is the grpc.ServiceDesc for Comm service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -524,6 +588,10 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Comm_JugadaTerceraEtapa_Handler,
 		},
 		{
+			MethodName: "PedirMonto",
+			Handler:    _Comm_PedirMonto_Handler,
+		},
+		{
 			MethodName: "RegistrarJugadaJugador",
 			Handler:    _Comm_RegistrarJugadaJugador_Handler,
 		},
@@ -534,6 +602,10 @@ var Comm_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SolicitarMonto",
 			Handler:    _Comm_SolicitarMonto_Handler,
+		},
+		{
+			MethodName: "ReiniciarPartida",
+			Handler:    _Comm_ReiniciarPartida_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

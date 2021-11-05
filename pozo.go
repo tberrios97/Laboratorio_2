@@ -18,11 +18,6 @@ var montoAcumulado int32 = 0
 type CommServer struct {
 	pb.UnimplementedCommServer
 }
-func (s *CommServer) SolicitarMonto(ctx context.Context, in *pb.RequestMonto) (*pb.ResponseMonto, error){
-	log.Printf("%v",montoAcumulado)
-	log.Printf("Request from lider")
-	return &pb.ResponseMonto{MontoAcumulado: montoAcumulado}, nil
-}
 func check(e error) {
     if e != nil {
         panic(e)
@@ -38,6 +33,20 @@ func archivoExiste(ruta string) bool {
 		return false
 	}
 	return true
+}
+func (s *CommServer) SolicitarMonto(ctx context.Context, in *pb.RequestMonto) (*pb.ResponseMonto, error){
+	log.Printf("%v",montoAcumulado)
+	log.Printf("Request from lider")
+	return &pb.ResponseMonto{MontoAcumulado: montoAcumulado}, nil
+}
+func (s *CommServer) ReiniciarPartida(ctx context.Context, in *pb.RequestTest) (*pb.ResponseTest, error){
+	nombre_archivo:="registro_eliminados.txt"
+	if (archivoExiste(nombre_archivo)){
+		err := os.Remove(nombre_archivo)
+		check(err)
+	}
+	montoAcumulado = 0
+	return &pb.ResponseTest{Body: "hola jorge :D"}, nil
 }
 func agregar_eliminado(nombre_archivo string, jugador int, ronda int,monto_acumulado int32){
 	if (archivoExiste(nombre_archivo)){
