@@ -463,7 +463,7 @@ func (s *CommServer) JugadaPrimeraEtapa(ctx context.Context, in *pb.RequestPrime
   ronda := in.GetRonda()
   jugador := in.GetJugador()
 
-  response := registrar_jugada_nameNode(jugador ,1 ,jugada, "localhost:9100")
+  registrar_jugada_nameNode(jugador ,1 ,jugada, "localhost:9100")
 
   //Suma de la jugada actual del jugador
   contadorJugadaJugador[jugador - 1] = contadorJugadaJugador[jugador - 1] + jugada
@@ -528,7 +528,7 @@ func (s *CommServer) JugadaSegundaEtapa(ctx context.Context, in *pb.RequestSegun
   jugada := in.GetJugada()
   jugador := in.GetJugador()
 
-  response := registrar_jugada_nameNode(jugador ,2 ,jugada ,"localhost:9100")
+  registrar_jugada_nameNode(jugador ,2 ,jugada ,"localhost:9100")
 
   //Contar jugada segun el equipo del jugador
   if contadorJugadaJugador[jugador - 1] == 1 {
@@ -600,7 +600,7 @@ func (s *CommServer) JugadaTerceraEtapa(ctx context.Context, in *pb.RequestTerce
   jugada := in.GetJugada()
   jugador := in.GetJugador()
 
-  response := registrar_jugada_nameNode(jugador ,3 ,jugada, "localhost:9100")
+  registrar_jugada_nameNode(jugador ,3 ,jugada, "localhost:9100")
 
   //Obtener oponente y registrar jugada
   var oponente int32 = contadorJugadaJugador[jugador - 1]
