@@ -69,7 +69,7 @@ func resetPozo(){
   }
   defer coneccion.Close()
   cliente := pb.NewCommClient(coneccion)
-  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
   _, err = cliente.ReiniciarPartida(ctx, &pb.RequestTest{Body: "hola jorge :D"})
   if err != nil {
@@ -85,7 +85,7 @@ func resetNameNode(){
   }
   defer coneccion.Close()
   cliente := pb.NewCommClient(coneccion)
-  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
   _, err = cliente.ReiniciarPartida(ctx, &pb.RequestTest{Body: "hola jorge :D"})
   if err != nil {
@@ -230,7 +230,7 @@ func SolicitarMonto() int32{
   }
   defer coneccion.Close()
   cliente := pb.NewCommClient(coneccion)
-  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
   response, err := cliente.SolicitarMonto(ctx, &pb.RequestMonto{MontoAcumulado: int32(1)}) //Revisar
   if err != nil {
