@@ -32,4 +32,4 @@
 			- make jugadores (cuando se realiza este comando, se debe de tener paciencia dato que demora su ejecución, aprox 1-2 min)
 		- Para cerrar el proceso de cualquiera de las instancias, con el comando Ctrl+C puede ser eliminado.
 		- Para cerrar el proceso de los bots, es necesario cerrar el proceso del lider.
-		- El orden propuesto de las maquinas es mandatorio para una ejecución correcta.
+		- El orden propuesto de las maquinas es mandatorio para una ejecución correcta: ejecutar los 3 dataNode, luego nameNode, el pozo, el lider y por ultimo los jugadores
