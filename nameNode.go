@@ -44,7 +44,7 @@ func existeArchivo(archivo string) bool {
 }
 
 func buscarEnArchivo(n_jugador int, n_ronda int) string{
-  var retorno string
+  var retorno string = "-1"
   archivo, err := os.Open("registro_jugadas.txt")
   if err != nil {
     log.Fatal(err)
@@ -178,6 +178,11 @@ func (s *CommServer) RegistrarJugadaJugador(ctx context.Context, in *pb.RequestR
 
   if(int(in.GetNRonda()) == 1 && existeArchivo("registro_jugadas.txt")){
     direccion = buscarEnArchivo(int(in.GetNJugador()), int(in.GetNRonda()))
+		if direccion == "-1" {
+			pos_aleatorio = random(0,2)
+	    direccion = direcciones_dataNode[pos_aleatorio]
+	    archivoJugada(int(in.GetNJugador()), int(in.GetNRonda()), direccion)
+		}
   }else{
     pos_aleatorio = random(0,2)
     direccion = direcciones_dataNode[pos_aleatorio]
