@@ -44,7 +44,9 @@ func existeArchivo(archivo string) bool {
 }
 
 func buscarEnArchivo(n_jugador int, n_ronda int) string{
+	log.Printf("jugada", n_ronda)
   var retorno string = "-1"
+	var numero string
   archivo, err := os.Open("registro_jugadas.txt")
   if err != nil {
     log.Fatal(err)
@@ -54,7 +56,8 @@ func buscarEnArchivo(n_jugador int, n_ronda int) string{
   scanner := bufio.NewScanner(archivo)
   for scanner.Scan() {
     linea := strings.Split(scanner.Text()," ")
-    if (linea[0][len(linea[0])-1:] == strconv.Itoa(n_jugador) && linea[1][len(linea[1])-1:] == strconv.Itoa(n_ronda)) {
+		numero = strings.Split(linea[0], "_")[1]
+    if (numero == strconv.Itoa(n_jugador) && linea[1][len(linea[1])-1:] == strconv.Itoa(n_ronda)) {
       retorno = strings.Replace(linea[2], "\n","",-1)
     }
   }
