@@ -265,7 +265,7 @@ func juegoEtapa3(cliente pb.CommClient, ctx context.Context, numeroJugador int32
     return jugando, 0, 0
   }
 
-  fmt.Println("[*] Tu contrincante es el Jugador", contrincante)
+  //fmt.Println("[*] Tu contrincante es el Jugador", contrincante)
   fmt.Print("[*] Elija un número entre el 1 y 10.\n[*] Realice su jugada: ")
   fmt.Scan(&jugada)
   fmt.Println("[*] Esperando jugadas de los demás jugadores...")
