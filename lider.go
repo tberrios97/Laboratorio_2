@@ -17,7 +17,7 @@ import (
 
 const (
   port = ":9000"
-  capacidadJugadores = 2
+  capacidadJugadores = 16
   address = "dist59:3000"  //REVISAR
 )
 
