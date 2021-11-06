@@ -17,7 +17,7 @@ import (
 
 const (
   port = ":9000"
-  capacidadJugadores = 16
+  capacidadJugadores = 2
   address = "dist59:3000"  //REVISAR
 )
 
@@ -671,7 +671,7 @@ func buscar_jugada_nameNode(id_jugador int32, num_ronda int32, direccion_nameNod
 
   c := pb.NewCommClient(conn)
 
-  ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
 
   response, err := c.BuscarJugada(ctx, &pb.RequestBJ{NJugador: id_jugador, NRonda: num_ronda})
@@ -705,7 +705,7 @@ func registrar_jugada_nameNode(id_jugador int32, num_ronda int32, jugada int32, 
 
   c := pb.NewCommClient(conn)
 
-  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
 
   response, err := c.RegistrarJugadaJugador(ctx, &pb.RequestRJJ{NJugador: id_jugador, NRonda: num_ronda, Jugada: jugada})

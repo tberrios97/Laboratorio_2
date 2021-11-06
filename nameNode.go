@@ -108,7 +108,7 @@ func resetDataNode(address string){
   }
   defer coneccion.Close()
   cliente := pb.NewCommClient(coneccion)
-  ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+  ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
   defer cancel()
   _, err = cliente.ReiniciarPartida(ctx, &pb.RequestTest{Body: "hola jorge :D"})
   if err != nil {
@@ -144,7 +144,7 @@ func (s *CommServer) BuscarJugada(in *pb.RequestBJ, stream pb.Comm_BuscarJugadaS
 	defer conn.Close()
 
 	c := pb.NewCommClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(),10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),60*time.Second)
 	defer cancel()
 
 	streaming, err := c.ObtenerJugada(ctx, &pb.RequestOJ{NJugador: in.GetNJugador(), NRonda: in.GetNRonda()})
@@ -191,7 +191,7 @@ func (s *CommServer) RegistrarJugadaJugador(ctx context.Context, in *pb.RequestR
 	defer conn.Close()
 
 	c := pb.NewCommClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	response, err := c.RegistrarJugadaDN(ctx, &pb.RequestRJDN{NJugador: in.GetNJugador(), NRonda: in.GetNRonda(), Jugada: in.GetJugada()})
