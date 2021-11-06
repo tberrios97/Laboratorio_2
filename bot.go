@@ -16,7 +16,7 @@ const (
 
 func random(min, max int) int {
   //49152-65535
-  return rand.Intn(max-min) + min
+  return rand.Intn(max-min+1) + min
 }
 
 func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32) (bool, bool, int32, int32){
@@ -36,7 +36,7 @@ func juegoEtapa1(cliente pb.CommClient, ctx context.Context, numeroJugador int32
     //Comprobar que el jugador no haya ganada ya la etapa
     if !ganador {
       //Lectura de la jugada en cada ronda, hasta un máximo de 4
-      jugada = int32(random(5, 6))
+      jugada = int32(random(5, 7))
 
       //Enviar al Líder la jugada y recibir respuesta
       respuesta, err := cliente.JugadaPrimeraEtapa(ctx, &pb.RequestPrimeraEtapa{Jugada: jugada, Ronda:ronda, Jugador:numeroJugador})
