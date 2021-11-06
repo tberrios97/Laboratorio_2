@@ -136,6 +136,7 @@ func (s *CommServer) BuscarJugada(in *pb.RequestBJ, stream pb.Comm_BuscarJugadaS
   log.Printf("Numero ronda: %d", in.GetNRonda())
 
 	direccion = buscarEnArchivo(int(in.GetNJugador()), int(in.GetNRonda()))
+	log.Printf("direccion a buscar %v",direccion)
 
 	conn, err := grpc.Dial(direccion+":9300", grpc.WithInsecure())
 	if err != nil {
