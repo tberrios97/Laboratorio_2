@@ -17,7 +17,7 @@ import (
 
 func random(min, max int) int {
   //49152-65535
-  return rand.Intn(max-min) + min
+  return rand.Intn(max-min + 1) + min
 }
 
 const (
